@@ -1,0 +1,8 @@
+.idea
+composer.lock
+*.log
+runtime
+thinkphp/data
+thinkphp/file
+thinkphp/tmp
+thinkphp/uploads
