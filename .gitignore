@@ -2,7 +2,7 @@
 composer.lock
 *.log
 runtime
-thinkphp/data
-thinkphp/file
-thinkphp/tmp
-thinkphp/uploads
+public_html/data
+public_html/file
+public_html/tmp
+public_html/uploads
