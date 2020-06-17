@@ -1,5 +1,6 @@
 <?php
-namespace sdk;
+//namespace sdk;
+namespace country_api\sdk;
 
 /**
  * Handles all HTTP requests using cURL and manages the responses.

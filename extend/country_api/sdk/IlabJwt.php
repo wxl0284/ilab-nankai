@@ -1,5 +1,6 @@
 <?php
-namespace sdk;
+//namespace sdk;
+namespace country_api\sdk;
 
 class IlabJwt
 {

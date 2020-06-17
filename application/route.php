@@ -22,4 +22,4 @@ return [
 ];*/
 
 
-//Route::rule('hello/:name', 'index/hello');
+Route::get('test', 'country/Test/test');

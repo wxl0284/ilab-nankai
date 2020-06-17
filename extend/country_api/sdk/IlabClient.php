@@ -1,11 +1,12 @@
 <?php
-/**
- * All rights reserved
- */
-namespace sdk;
-
+/*namespace sdk;
 use sdk\RequestCore;
-use sdk\SdkUtil;
+use sdk\SdkUtil;*/
+namespace country_api\sdk;
+
+use country_api\sdk\RequestCore;
+use country_api\sdk\SdkUtil;
+
 
 class IlabClient
 {

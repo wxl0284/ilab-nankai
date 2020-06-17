@@ -250,6 +250,13 @@ class Subject extends Wx
     }
 
     public function detail(){
+        //检查用户是否从国家平台登录后过来的
+        $url = request()->url(true);
+        $url = "http://ilab.com/index/subject/detail?id=30&isView=true?token=AAABZKECn4ABAAAAAAABhqM%3D.fKf3J5DN6Ym0Fo3I5CJYdzQMR0iwEz7QnQIit2Mfl6v03jpEJ%2Fr4FMRFqh5kN4yw.tqIPoyvkHe2MGOXMimE9O554Lo6AbBCQkZlsqQI4XRQ%3D";
+        //halt($url);
+        //$this->user_from_country($url);
+
+        //检查用户是否从国家平台登录后过来的 结束
         $id = $this->request->get("id");
         $data = array(
             "subject_id" => $id,
@@ -257,6 +264,26 @@ class Subject extends Wx
         );
         Db::name("subject_browse")->insert($data);
         return $this->fetch();
+    }
+
+    /*
+     user_from_country() 检查url中是否带有国家平台的token
+     $url:请求的url
+    */
+
+    protected function user_from_country ($url)
+    {
+        //解析并验证url中的token
+        //$token = 
+
+       /* if (token有效)
+        {
+            //将此用户数据插入到tp_user表，并设置session
+        }else
+        {//不带token
+            return false;
+        }*/
+
     }
 
     public function detail_up(){

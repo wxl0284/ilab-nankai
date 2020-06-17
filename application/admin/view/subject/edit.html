@@ -218,8 +218,15 @@
             </div>
             <div class="col-xs-3 col-sm-3"></div>
         </div>
-
-    
+        <!--提交实验项目的国家平台编号：issuerId-->
+        <div class="row cl">
+            <label class="form-label col-xs-3 col-sm-3">国家平台编号（issuerId）：</label>
+            <div class="formControls col-xs-3 col-sm-3">
+                <input type="text" class="input-text" placeholder="国家平台编号" name="issuerId" value="{$vo.issuerId ?? ''}"  nullmsg="虚拟仿真项目">
+            </div>
+            <!-- <div class="col-xs-3 col-sm-3"></div> -->
+        </div>
+        <!--提交实验项目的国家平台编号：issuerId 结束-->        
     </div>
     
     <!-- //项目团队 -->
@@ -636,7 +643,7 @@
             <div class="col-xs-3 col-sm-3"></div>
         </div>
     </div>
-
+    
     <div class="row cl">
         <div class="col-xs-8 col-sm-9 col-xs-offset-4 col-sm-offset-3">
             <button type="submit" class="btn btn-primary radius">&nbsp;&nbsp;提交&nbsp;&nbsp;</button>
