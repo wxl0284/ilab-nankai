@@ -227,5 +227,14 @@
         </div>
         {include file="public/footer" /}
     </div>
+    <script>
+        //将用户id , user_type, experiment_id 存储于此页面，用以后续页面获取此3个值用来给国家平台回传成绩
+        let user_id = '' + {$user_id}
+        let user_type = '' + {$home_user_type};
+        let exprmt_id = '' + {$experiment_id};
+        sessionStorage.setItem('experiment_id', exprmt_id);
+        sessionStorage.setItem('experiment_id', exprmt_id);
+        sessionStorage.setItem('experiment_id', exprmt_id);
+    </script>
 </body>
 </html>

@@ -219,7 +219,6 @@ X.sub("init", function() {
 
 
         if(item.subject_brief_img && item.subject_brief_video && (item.subject_lead_img && item.subject_lead_video)){
-            console.log("aa111");
             checkVideo(1);
         }
 

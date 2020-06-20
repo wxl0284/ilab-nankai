@@ -94,13 +94,12 @@ class IlabJwt
 		$payload = base64_decode($base64Payload);
 		$signature = base64_decode($base64Signature);
 		
-
 		// 验证signature
 		if (!self::validateSignature($signature, $base64Header, $base64Payload)) {
 			// self::log('Signature is invalid.');
 			return null;
 		}
-		
+	
 		// 验证过期时间
 		//header:expiry
 		$expiry = substr($header, 0, 8);
@@ -108,7 +107,7 @@ class IlabJwt
 			// self::log('Data is expired.');
 			return null;
 		}
-		
+	
 		// 验证类型
 		//header:type
 		$type = substr($header, 8, 1);
@@ -116,7 +115,7 @@ class IlabJwt
 			// self::log('Type is invalid.');
 			return null;
 		}
-		
+	
 		// 验证issuerId
 		//header:issuerid
 		$issuerId = substr($header, 9);
@@ -124,14 +123,14 @@ class IlabJwt
 			// self::log('Issuer is invalid.');
 			return null;
 		}
-		
+	
 		// 解密payload获取body信息
 		//payload
 		$body = self::decrypt($payload);
 		if (!$body) {
 			return null;
 		}
-		
+	
 		//['id' => xxx, 'un' => 'xxx', 'dis' => 'xxx']
 		return json_decode($body, true);
 		

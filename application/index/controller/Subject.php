@@ -4,6 +4,7 @@ use think\Response;
 use think\Db;
 use think\Session;
 use app\common\model\Redis;
+use country_api\sdk\IlabJwt; //引入处理token的文件
 /**
  * 设备台账管理
  * Class Subject
@@ -250,14 +251,24 @@ class Subject extends Wx
     }
 
     public function detail(){
+        $id = $this->request->get("id");
         //检查用户是否从国家平台登录后过来的
-        $url = request()->url(true);
-        $url = "http://ilab.com/index/subject/detail?id=30&isView=true?token=AAABZKECn4ABAAAAAAABhqM%3D.fKf3J5DN6Ym0Fo3I5CJYdzQMR0iwEz7QnQIit2Mfl6v03jpEJ%2Fr4FMRFqh5kN4yw.tqIPoyvkHe2MGOXMimE9O554Lo6AbBCQkZlsqQI4XRQ%3D";
-        //halt($url);
-        //$this->user_from_country($url);
+        $url = $this->request->url(true);
+        //$url = "http://ilab.com/index/subject/detail?id=30&isView=true?token=AAABcsqOFzkBAAAAAAABkFI=.bqgvrZHv515fgUECBKFE6dTYdpMkq5vSPH+vmC3galrVmUvNNQ64ryfkrGQOcbcjWhs1xJhS5CamhvT6oK1Eqmmhf4RpOD5UnsFnGrpXiP4yYnvKCN4RBPIobqIHrC05dEo067B9IfKTYV0URElvKwMvC1eXLNRoyhrwTTkzdfHXvNLm21ChJJz2y7o0Fsq0IHMgryUfdY7f2l8m12yJWH61COm7IKMM3vW1zUokQaUe1NGF1YQWmauJizCvymOx0naN285RkLv243qXtbivwjcC2ErtROnea8EUYx3A8vfzxSQrEQyzzENo1Hnxx0U1YCbZ/QzGacMcLj8fewfpCg==.XHzPerCA47QDfHKjyEJ9KFZUDPfa8gvbcOEhjcxqzjA=";
+
+        $r = $this->user_from_country($url, $id);
+
+        //if ( $r !== false )
+        if ( 1 )
+        {//用户是从国家平台登录且token验证ok 数据入库ok
+            session::set('home_user_id', $r['home_user_id']);
+
+            $this->assign('user_id', $r['home_user_id']);
+            $this->assign('home_user_type', $r['home_user_type']);
+            $this->assign('experiment_id', $r['experiment_id']);            
+        }
 
         //检查用户是否从国家平台登录后过来的 结束
-        $id = $this->request->get("id");
         $data = array(
             "subject_id" => $id,
             "create_time" => time()
@@ -268,23 +279,62 @@ class Subject extends Wx
 
     /*
      user_from_country() 检查url中是否带有国家平台的token
+     参数：$url为请求的url，$id为当前实验项目在tp_subject表中的主键id
      $url:请求的url
+     返回值 $return
     */
 
-    protected function user_from_country ($url)
+    protected function user_from_country ($url, $id)
     {
-        //解析并验证url中的token
-        //$token = 
+        $return = array();//fan
 
-       /* if (token有效)
+        //解析并验证url中的token
+        $p = strpos($url, 'token=');
+
+        if ( $p === false )
+        {
+           return $return = false;
+        }
+
+        $token = substr ($url, $p+6);
+
+        $token = str_replace(' ', '+', urldecode($token));
+       
+        $token = IlabJwt::getBody($token);
+
+        if ( $token !== null )//token验证ok
         {
             //将此用户数据插入到tp_user表，并设置session
-        }else
-        {//不带token
-            return false;
-        }*/
+            $user = Db::table('tp_user')->where('country_id', $token['id'])->find();
 
-    }
+            if ( $user )
+            {
+                $return['home_user_id'] = $user['id'];
+                $return['home_user_type'] = $user['user_type'];
+                $return['experiment_id'] = $id;
+
+            }else{//表里无此用户
+                $data['country_id'] = $token['id']; //国家平台用户id
+                $data['country_un'] = $token['un']; //国家平台用户账号
+                $data['user_name'] = $token['dis']; //国家平台用户姓名
+                $data['user_type'] = 1;//国家平台登录用户类型
+
+                $res = Db::table('tp_user')->insertGetId($data);
+
+                if ( $res )
+                {
+                    $return['home_user_id'] = $res;
+                    $return['home_user_type'] = 1;
+                    $return['experiment_id'] = $id;
+                }
+            }
+
+        }else{//token 验证失败
+            $return = false;
+        }
+
+        return $return;
+    }//user_from_country () 结束
 
     public function detail_up(){
         $date = $this->request->get();
@@ -793,6 +843,12 @@ class Subject extends Wx
      //    }
     }
 
+    /*
+    check_user(): 南开统一身份认证，获取师生信息
+    */
     
- 
+    public function check_user ()
+    {
+        //
+    }//check_user 结束
 }
