@@ -229,11 +229,20 @@
     </div>
     <script>
         //将用户id , user_type, experiment_id 存储于此页面，用以后续页面获取此3个值用来给国家平台回传成绩
-        let user_id = '' + {$user_id}
-        let user_type = '' + {$home_user_type};
-        let exprmt_id = '' + {$experiment_id};
-        sessionStorage.setItem('experiment_id', exprmt_id);
-        sessionStorage.setItem('experiment_id', exprmt_id);
+        {if condition='isset($user_id)'} let user_id = '' + {$user_id};
+		{else/} let user_id = '';
+		{/if}
+		
+		{if condition='isset($home_user_type)'} let user_type = '' + {$home_user_type};
+		{else/} let user_type = '';
+		{/if}
+		
+		{if condition='isset($experiment_id)'} let exprmt_id = '' + {$experiment_id};
+		{else/} let exprmt_id = '';
+		{/if}
+        
+        sessionStorage.setItem('user_id', user_id);
+        sessionStorage.setItem('user_type', user_type);
         sessionStorage.setItem('experiment_id', exprmt_id);
     </script>
 </body>

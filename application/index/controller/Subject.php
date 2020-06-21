@@ -580,20 +580,19 @@ class Subject extends Wx
         
     }
 	
-    //做实验
-    /*2020.05.26暂时去掉登录前
+    //做实验前
 	public function examine(){
-        $date = $this->request->post();
+        $date = input();
 		
         if(!session::get('home_user_id')){
-            return json(['code'=>100,'msg'=>"您还未登陆"]);
+            return json([ 'code'=>100,'msg'=>"您还未登陆", 'experiment_id'=>$date['id'] ]);//把当前实验的id返回给前端
         }
+		
+		$this->redirect( 'index/subject/examine_url', ['id'=>$date['id']], 302, ['user_type'=>session::get('user_type')] );
 		
         $subject = Db::name("subject")->where(['id'=>$date['id']])->field("zip_file, zip_name, zip_name_file, emulate_subject")->find();
         
 		$zip_name_file = '';
-		
-		//halt( $subject );
 		
 		if ( $subject['emulate_subject'] )//如果实验使用的是网址链接的话
 		{
@@ -618,11 +617,11 @@ class Subject extends Wx
 			}
 			
 		}
-		
 
        // $emulate_subject = Db::name("subject")->where(['id'=>$date['id']])->value("zip_name_file");
         if(!$zip_name_file){
-            return json(['code'=>100,'msg'=>"该项目不能做实验！"]);
+            //与国家平台对接前 return json(['code'=>100,'msg'=>"该项目不能做实验！"]);
+            $this->error('该项目不能做实验~');
         }
 
         $subject_examine = Db::name("subject_examine")->where(['subject_id'=>$date['id'],'user_id'=>session::get("home_user_id")])->find();
@@ -642,11 +641,11 @@ class Subject extends Wx
             $this->log('【做实验】');
         }
 
-		//halt($zip_name_file);
-        return json(['code'=>200,'result'=>$zip_name_file]);
-    }*/
+        //与国家平台对接前 return json(['code'=>200,'result'=>$zip_name_file]);
+        $this->redirect( 'index/subject/examine_url', ['id'=>$date['id']], 302, ['user_type'=>session::get('user_type')] );
+    }
 	
-	//做实验
+	/*//做实验 去掉登录的examine()
 	public function examine(){
         $date = $this->request->post();
 		
@@ -688,7 +687,7 @@ class Subject extends Wx
 
 		//halt($zip_name_file);
         return json(['code'=>200,'result'=>$zip_name_file]);
-    }
+    }*/
 
     //评论列表
     public function evaluate_list(){
@@ -761,11 +760,17 @@ class Subject extends Wx
         $this->log('【回复】');
         return json(['code'=>200,'msg'=>"回复成功！"]);
     }
-    public function examine_url(){
-        $date = $this->request->post();//仅提交了subject的id
+	
+	/*
+	  examine_url()：在这里才开始去做实验的
+	*/
+    public function examine_url ()
+	{
+        $date = input();//仅提交了subject的id
 		
         $subject_id = $date['id'];
-        
+        $user_type = session::get('user_type');
+		
         Vendor("GetMacAddr");
         $mac = new \GetMacAddr(PHP_OS); 
         $pc_card = $mac->mac_addr; 
@@ -793,9 +798,9 @@ class Subject extends Wx
 		{
 			$emulate_subject = $r['emulate_subject'];
 		}else {
-			return json(['code'=>100,'msg'=>"该项目不能做实验！"]);
+			//与国家平台对接前 return json(['code'=>100,'msg'=>"该项目不能做实验！"]);
+			$this->error('该项目不能做实验~');
 		}
-		
 		
        /* if($file_path){
             $emulate_subject = "/".$file_path."/index.html";
@@ -806,11 +811,30 @@ class Subject extends Wx
         if($keys){
             foreach ($keys as $key => $val) {
                 $getData = $model->getValue("examine" . $import_no, $val);
-                if((time() - $getData['create_time'] <= 1800) && ($getData['subject_id'] == $examine['subject_id']) &&($getData['pc_card'] == $examine['pc_card'])){
-                    return json(['code'=>200,'result'=>$emulate_subject]);
-                }
+                if((time() - $getData['create_time'] <= 1800) && ($getData['subject_id'] == $examine['subject_id']) &&($getData['pc_card'] == $examine['pc_card']))
+				{
+                    //与国家平台对接前 return json(['code'=>200,'result'=>$emulate_subject]);
+
+					if ( strpos($emulate_subject, '|') !== false )
+					{//当实验项目的url地址是用'|'分隔，前面是专家做实验的的url
+						$arr = explode('|', $emulate_subject);
+						
+						if ( $user_type == 4 )
+						{//是评审专家
+							$this->redirect($arr[0]);
+						}
+						else
+						{
+							$this->redirect($arr[1]);
+						}
+						
+					}
+					
+					$this->redirect($emulate_subject);
+				}
              
             }
+			
             foreach ($keys as $key => $val) {
                 $getData = $model->getValue("examine" . $import_no, $val);
                 if(time() - $getData['create_time'] > 1800){
@@ -821,9 +845,11 @@ class Subject extends Wx
                 }
             }
 			
-            if($icount >= 99){
-                return json(['code'=>100,'msg'=>"该项目做实验已超过100，请稍后再试！"]);
-            }else{
+            if($icount >= 99)
+			{
+                //与国家平台对接前 return json(['code'=>100,'msg'=>"该项目做实验已超过100，请稍后再试！"]);
+				$this->error('该项目做实验已超过100，请稍后再试~');
+			}else{
                 foreach ($keys as $key => $val) {
                     $getData = $model->getValue("examine" . $import_no, $val);
                     if((($getData['pc_card'] == $examine['pc_card']) && ($getData['subject_id'] <> $examine['subject_id'])) || (($getData['pc_card'] <> $examine['pc_card']) && ($getData['subject_id'] == $examine['subject_id'])) || (($getData['pc_card'] <> $examine['pc_card']) && ($getData['subject_id'] <> $examine['subject_id']))){
@@ -834,21 +860,318 @@ class Subject extends Wx
         }else{
             $model->setValue("examine" . $import_no, $icount, $examine);
         }
-        return json(['code'=>200,'result'=>$emulate_subject]);
-        // $keys = $model->getKeys("examine" . $import_no);
-        // foreach ($keys as $key => $val) {
-     //        $getData = $model->getValue("examine" . $import_no, $val);
-     //        echo("<pre>");
-     //        print_r($getData);
-     //    }
-    }
+		
+        //与国家平台对接前 return json(['code'=>200,'result'=>$emulate_subject]);
+
+		if ( strpos($emulate_subject, '|') !== false )
+		{//当实验项目的url地址是用'|'分隔，前面是专家做实验的的url
+			$arr = explode('|', $emulate_subject);
+			
+			if ( $user_type == 4 )
+			{//是评审专家
+				$this->redirect($arr[0]);
+			}
+			else
+			{
+				$this->redirect($arr[1]);
+			}
+			
+		}
+		
+		$this->redirect($emulate_subject);
+    }//examine_url 结束
 
     /*
     check_user(): 南开统一身份认证，获取师生信息
+    返回值：师生信息的数组
     */
     
     public function check_user ()
     {
-        //
+		$d = input('');
+		
+		//判断并获取要做实验的experiment_id
+		$experiment_id = isset($d['experiment_id']) ? $d['experiment_id'] : null;
+		
+        $loginServer     = "https://sso.nankai.edu.cn/sso/login"; //南开统一身份认证登录地址
+        $address         = "https://ilab-x.nankai.edu.cn/api/check_user"; //当前控制器的此方法，即南开统一身份认证的回调地址
+        $validateServer  = "https://sso.nankai.edu.cn/sso/serviceValidate"; //南开cas服务器验证地址
+
+        if ( isset($_REQUEST["ticket"]) && !empty($_REQUEST["ticket"]) )
+        {
+            try {
+                // url里带上ticket去cas服务验证地址
+                $validate_url = $validateServer."?ticket=".$_REQUEST["ticket"]."&service=".$address;
+                header("Content-Type:text/html;charset=utf-8");
+                //服务端为https，需加以下配置
+                $arrContextOptions = [
+                    "ssl" => [
+                        "verify_peer" => false,
+                        "verify_peer_name" => false]
+                ];
+
+                $abc = urldecode(file_get_contents( $validate_url, false, stream_context_create($arrContextOptions) ) );
+                
+                //$abc = urldecode( file_get_contents($validate_url) ); //http使用这种方式
+            		
+                $dom = new \DOMDocument(); // 创建一个dom文档
+
+                $dom->preserveWhiteSpace = false; //忽略xml命名空间
+                $dom->encoding = "utf-8";
+                $dom->loadXML($abc);
+                /*
+                获取用户的唯一标识信息
+                由UIA的配置不同可分为两种：
+                (1)学生：学号；教工：身份证号
+                (2)学生：学号；教工：教工号
+                */
+
+                $extra_attributes = [];
+                
+                // CAS服务器只允许utf-8格式的数据
+                $success = $dom->getElementsByTagName("authenticationSuccess");
+
+                if( $success->length != 0 )
+                {
+                    $item      = $success->item(0);
+                    $item_user = $item->getElementsByTagName("user");
+                    
+                    if ( $item_user->length == 0 )
+                    {
+                        header("Location: " . $loginServer . "?service=" . $address);
+                    }
+                    else 
+                    {
+                        $attr_nodes = $item->getElementsByTagName("attributes");
+
+                        if ( $attr_nodes->length != 0 )
+                        {
+                            if ( $attr_nodes->item(0)->hasChildNodes() )
+                            {
+                                foreach ( $attr_nodes->item(0)->childNodes as $attr_child )
+                                {
+                                    _addAttributeToArray( $extra_attributes, $attr_child->localName, $attr_child->nodeValue );
+                                }
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    header("Location:" . $loginServer . "?service=" . $address); 
+                }
+                // 获取登录用户的信息  
+                $res['user_name'] = isExistInArray($extra_attributes,"comsys_name"); // 用户姓名
+                $res['phone'] = isExistInArray($extra_attributes,"comsys_phone"); // 电话号码
+                $res['sex'] = isExistInArray($extra_attributes,"comsys_genders"); // 性别               
+                $res['email'] = isExistInArray($extra_attributes,"comsys_email");// 邮件
+                $res['teaching_number'] = isExistInArray($extra_attributes,"comsys_teaching_number");// 教工号                
+                $res['student_number'] = isExistInArray($extra_attributes,"comsys_student_number");// 学生号                
+                $res['type'] = isExistInArray($extra_attributes,"comsys_usertype");// 获取用户类型   1-学生  2-教工                
+                $res['major'] = isExistInArray($extra_attributes,"comsys_disciplinename"); // 学生专业名称
+				
+				if ( $res['teaching_number'] )
+				{
+					$res['nankai_user_id'] = $res['teaching_number'];
+					unset($res['teaching_number']);
+				}else if ( $res['student_number'] ) {
+					$res['nankai_user_id'] = $res['student_number'];
+					unset($res['student_number']);
+				}
+				
+				if ( $res['type'] == 1 )//学生
+				{
+					$res['user_type'] = 2;
+					unset($res['type']);
+				}else if( $res['type'] == 2 )//老师
+				{
+					$res['user_type'] = 3;
+					unset($res['type']);
+				}
+                
+				$data = Db::table('tp_user')->where('nankai_user_id', $res['nankai_user_id'])->find();
+				
+				if ( !$data )
+				{
+					$tp_user_id = Db::table('tp_user')->insertGetId($res);
+					if ($tp_user_id)
+					{
+						session::set('home_user_id', $tp_user_id);
+						$this->redirect('index/subject/examine', ['id' => $experiment_id], 302, ['user_type' => $res['user_type'] ] );
+					}
+				}else
+				{
+					session::set('home_user_id', $data['id']);
+					$this->redirect('index/subject/examine', ['id' => $experiment_id], 302, ['user_type' => $res['user_type'] ] );
+				}
+            }//try 结束
+            catch (Exception $e)
+            {
+                header("Location:" . $loginServer . "?service=" . $address);
+            }    
+        }
+        else
+        {
+            header("Location:" . $loginServer . "?service=" . $address);
+        }
+        
+        
+    // cas服务器登录地址
+	// 	$loginServer = "https://sso.nankai.edu.cn/sso/login";
+	// 	// cas服务器验证地址
+	// 	$validateServer = "https://sso.nankai.edu.cn/sso/serviceValidate";
+	// 	// cas服务器回调地址
+	// 	$address = "https://iclass.nankai.edu.cn/api/caslogin";
+	// 	//cas退出地址,这是注销地址，注销时请先注销自己本地session,service参数就是回调地址
+	// 	$casLogoutUrl="https://sso.nankai.edu.cn/sso/logout?service=https://iclass.nankai.edu.cn/web/index.html";
+	//    // 如果请求带有ticket
+	// 	if (isset($_REQUEST["ticket"]) && !empty($_REQUEST["ticket"])) {
+	// 		try {
+	// 			// url里带上ticket去cas服务验证地址
+	// 			$validate_url = $validateServer."?ticket=".$_REQUEST["ticket"]."&service=".$address;
+	// 			header("Content-Type:text/html;charset=utf-8");
+	// 			//服务端为https，需加以下配置
+	// 			$arrContextOptions=array(
+	// 			"ssl"=>array(
+	// 				"verify_peer"=>false,
+	// 				"verify_peer_name"=>false,
+	// 					),
+	// 			);  
+	// 			$abc=urldecode(file_get_contents($validate_url,false, stream_context_create($arrContextOptions)));
+	// 			//http使用这种方式
+	// 			//$abc=urldecode(file_get_contents($validate_url));
+	// 			// 后去验证后的内容
+	// 			// 常见一个dom文档
+	// 			$dom = new \DOMDocument();
+	// 			// 忽略xml命名空间
+	// 			$dom->preserveWhiteSpace = false;
+	// 			$dom->encoding = "utf-8";
+	// 			$dom->loadXML($abc);
+	// 			/**
+	// 			*获取用户的唯一标识信息
+	// 			*由UIA的配置不同可分为两种：
+	// 			*(1)学生：学号；教工：身份证号
+	// 			*(2)学生：学号；教工：教工号
+	// 			**/
+	// 			$userid="";
+	// 			$extra_attributes = array();
+	// 			// CAS服务器只允许utf-8格式的数据
+	// 			 if($dom->getElementsByTagName("authenticationSuccess")->length != 0){
+	// 				 $a = $dom->getElementsByTagName("authenticationSuccess");
+	// 				  if ($a->item(0)->getElementsByTagName("user")->length == 0) {
+	// 					 header("Location: " . $loginServer . "?service=" . $address);
+	// 				  } else {
+	// 					$userid=$a->item(0)->getElementsByTagName("user")->item(0)->nodeValue;
+	// 					if ( $a->item(0)->getElementsByTagName("attributes")->length != 0) {
+	// 						$attr_nodes = $a->item(0)->getElementsByTagName("attributes");
+	// 						if ($attr_nodes->item(0)->hasChildNodes()) {
+	// 							foreach ($attr_nodes->item(0)->childNodes as $attr_child) {
+	// 								_addAttributeToArray($extra_attributes, $attr_child->localName,$attr_child->nodeValue);
+	// 							}
+	// 						}
+	// 					}
+	// 				}
+	// 			}else{
+	// 			   header("Location: " . $loginServer . "?service=" . $address); 
+	// 			}
+				
+	// 		// 获取登录用户的扩展信息  
+	// 		// 用户姓名
+	// 		$name =isExistInArray($extra_attributes,"comsys_name");
+	// 		// 电话号码
+	// 		$phone =isExistInArray($extra_attributes,"comsys_phone");
+	// 		// 民族
+	// 		$national =isExistInArray($extra_attributes,"comsys_national");
+	// 		// 性别
+	// 		$genders =isExistInArray($extra_attributes,"comsys_genders");
+	// 		// 邮件
+	// 		$email = isExistInArray($extra_attributes,"comsys_email");
+	// 		// 其它职位
+	// 		$other_post = isExistInArray($extra_attributes,"comsys_other_post");
+	// 		// 教育度程
+	// 		$educationals = isExistInArray($extra_attributes,"comsys_educational");
+	// 		// 教工号
+	// 		$teaching_number = isExistInArray($extra_attributes,"comsys_teaching_number");
+	// 		// 学生号
+	// 		$studentNumber =isExistInArray($extra_attributes,"comsys_student_number");
+	// 		// 获取用户类型   1-学生  2-教工
+	// 		$type =isExistInArray($extra_attributes,"comsys_usertype");
+	// 		/**
+	// 		*  角色数组
+	// 		*  key:ROLECNNAME;value:角色中文名称
+	// 		*  key:ROLEIDENTIFY;value:角色代码
+	// 		**/
+	// 		$role = isExistInArray($extra_attributes,"comsys_role");
+	// 		/**
+	// 		*  部门数组
+	// 		*  key:DEPARTMENTNAME;value:部门中文名称
+	// 		*  key:DEPARTMENTIDENTIFY;value:部门代码
+	// 		**/
+	// 		$department =isExistInArray($extra_attributes,"comsys_department");
+	// 		/**
+	// 		*  岗位数组
+	// 		*  key:POSTNAME;value:岗位中文名称
+	// 		*key:POSTIDENTIFY;value:岗位代码
+	// 		**/
+	// 		$post = isExistInArray($extra_attributes,"comsys_post");
+	// 		// 学生院系名称
+	// 		$faculetName = isExistInArray($extra_attributes,"comsys_faculetyname");
+	// 		// 学生院系代码
+	// 		$faculetCode =isExistInArray($extra_attributes,"comsys_faculetycode");
+	// 		// 学生年级名称
+	// 		$gradName = isExistInArray($extra_attributes,"comsys_gradename");
+	// 		// 学生年级代码
+	// 		$gradCode = isExistInArray($extra_attributes,"comsys_gradecode");
+	// 		// 学生专业名称
+	// 		$disciplinName =isExistInArray($extra_attributes,"comsys_disciplinename");
+	// 		// 学生专业代码
+	// 		$disciplinCode = isExistInArray($extra_attributes,"comsys_disciplinecode");
+	// 		// 学生班级名称
+	// 		$className =isExistInArray($extra_attributes,"comsys_classname");
+	// 		// 学生班级代码
+	// 		$classCode = isExistInArray($extra_attributes,"comsys_classcode");
+    //         $user_info = array('name' => $name, 'phone' => $phone, 'national' => $national, 'genders' => $genders, 'email' => $email, 'other_post' => $other_post, 'educationals' => $educationals, 'teaching_number' => $teaching_number, 'studentNumber' => $studentNumber, 'type' => $type, 'role' => $role, 'department' => $department, 'post' => $post, 'faculetName' => $faculetName, 'faculetCode' => $faculetCode, 'gradName' => $gradName, 'gradCode' => $gradCode, 'disciplinName' => $disciplinName, 'disciplinCode' => $disciplinCode, 'className' => $className, 'classCode' => $classCode);
+    //         //print_r($user_info);exit;
+    //         Session::set("user_infocas",$user_info);
+
+    //         header("Location: https://".$_SERVER['SERVER_NAME']."/web/home.html");exit;
+
+	// 		} catch (Exception $e) {
+	// 			echo $e->getMessage();
+	// 			header("Location: " . $loginServer . "?service=" . $address);
+	// 		}
+	// 	// 否则就去cas登录地址
+	// 	} else {
+	// 		header("Location: " . $loginServer . "?service=" . $address);
+	// 		exit;
+	// 	}
     }//check_user 结束
+	
+	/*
+	  experts_enter() 评审专家进来 做实验, 直接用默认账号登录即可
+	*/
+	
+	public function experts_enter ()
+	{
+		$experiment_id = input('experiment_id');
+		
+		$data = Db::table('tp_user')->where('user_name', 'visitor')->find();
+		
+		if ($data)
+		{
+			session::set('home_user_id', $data['id']);
+			$this->redirect('index/subject/examine', ['id' => $experiment_id], 302, ['user_type' => 4] );
+			//$this->redirect('/a/b.html');
+		}else{
+			
+			$id = Db::table('tp_user')->insertGetId(['user_name'=>'visitor', 'user_type'=>4]);
+			
+			if ($id)
+			{
+				session::set('home_user_id', $id);
+				$this->redirect('index/subject/examine', ['id' => $experiment_id], 302, ['user_type' => 4] );
+			}
+		}
+		
+	}//experts_enter 结束
 }

@@ -273,8 +273,6 @@ X.sub("init", function() {
         if (isLogged) {
             checkCollection(); //检测是否收藏
         }
-
-        // 我要做实验
 		
 		// 我要做实验
 		
@@ -287,7 +285,14 @@ X.sub("init", function() {
                 if (resp.code == '200') {
                     gotoConfirm();
                 } else {
-                    X.error(resp.msg);
+					
+					if ( resp.msg.indexOf('您还未登陆') > -1 )
+					{
+						select_login(resp.experiment_id); //弹出提示框让用户选择入口登录
+					}else{
+						X.error(resp.msg);
+					}
+                   
                 }
             })
         });
@@ -302,7 +307,7 @@ X.sub("init", function() {
             X.pub("showDialog", item);
         }
 
-        $(document).on("click","#confirmSubject",function(){
+        $(document).on("click","#confirmSubject",function(){//与国家平台对接前的流程
             X.post("/index/subject/examine_url", {
                 "id": X.qs.id
             }, function(resp) {
@@ -338,7 +343,35 @@ X.sub("init", function() {
             item.noCancel = true;
             X.pub("showDialog", item);
         }
-
+		
+		/*select_login(experiment_id) 弹出提示框让用户选择入口登录
+		*/
+		function select_login (experiment_id)
+		{console.log(experiment_id);
+			let item = {};
+			item.title = "登录后才可做实验";
+			item.msg = '<p class="goLink-link" style="text-align:center;">'
+					+ '<a href="http://www.ilab-x.com/login">ilab-x国家平台用户登录（在国家平台查到此实验->进入实验页面->我要做实验）</a><br>'
+					+ '<a href="/api/check_user/' + experiment_id + '">南开校内师生登录</a><br>'
+					//+ '<a href="/api/outer_logup" id="not_nankai">南开校外人士注册</a><br>'
+					+ '<a href="#" id="not_nankai">南开校外人士注册</a><br>'
+					+ '<a href="/api/experts_enter/' + experiment_id + '">评审专家直接进入</a></p>';
+			item.okText = "取消";
+            item.noCancel = true;
+			
+            X.pub("showDialog", item);
+		}//select_login 结束
+		
+		$(document).on("click","#not_nankai",function(){//校外注册
+            let item = {};
+			item.title = "提示";
+			item.msg = '校外注册功能正在完善~';
+			item.okText = "取消";
+            item.noCancel = true;
+			
+            X.pub("showDialog", item);
+        })
+		
         // 点赞
         $("#likeBtn").unbind().on("click", function() {
             if (project.status == "0") {
