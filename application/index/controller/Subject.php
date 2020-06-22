@@ -896,7 +896,7 @@ class Subject extends Wx
         $loginServer     = "https://sso.nankai.edu.cn/sso/login"; //南开统一身份认证登录地址
         $address         = "https://ilab-x.nankai.edu.cn/api/check_user"; //当前控制器的此方法，即南开统一身份认证的回调地址
         $validateServer  = "https://sso.nankai.edu.cn/sso/serviceValidate"; //南开cas服务器验证地址
-
+		
         if ( isset($_REQUEST["ticket"]) && !empty($_REQUEST["ticket"]) )
         {
             try {
@@ -958,7 +958,8 @@ class Subject extends Wx
                 }
                 else
                 {
-                    header("Location:" . $loginServer . "?service=" . $address); 
+                    //header("Location:" . $loginServer . "?service=" . $address); //无法访问
+					$this->redirect( $loginServer . "?service=" . $address );
                 }
                 // 获取登录用户的信息  
                 $res['user_name'] = isExistInArray($extra_attributes,"comsys_name"); // 用户姓名
@@ -969,7 +970,7 @@ class Subject extends Wx
                 $res['student_number'] = isExistInArray($extra_attributes,"comsys_student_number");// 学生号                
                 $res['type'] = isExistInArray($extra_attributes,"comsys_usertype");// 获取用户类型   1-学生  2-教工                
                 $res['major'] = isExistInArray($extra_attributes,"comsys_disciplinename"); // 学生专业名称
-				
+				halt( $res );
 				if ( $res['teaching_number'] )
 				{
 					$res['nankai_user_id'] = $res['teaching_number'];
@@ -1007,12 +1008,14 @@ class Subject extends Wx
             }//try 结束
             catch (Exception $e)
             {
-                header("Location:" . $loginServer . "?service=" . $address);
+                //header("Location:" . $loginServer . "?service=" . $address); //无法访问
+				$this->redirect( $loginServer . "?service=" . $address );
             }    
         }
         else
         {
-            header("Location:" . $loginServer . "?service=" . $address);
+            //header("Location:" . $loginServer . "?service=" . $address); //无法访问
+			$this->redirect( $loginServer . "?service=" . $address );
         }
         
         

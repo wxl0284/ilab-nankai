@@ -347,14 +347,14 @@ X.sub("init", function() {
 		/*select_login(experiment_id) 弹出提示框让用户选择入口登录
 		*/
 		function select_login (experiment_id)
-		{console.log(experiment_id);
+		{
 			let item = {};
 			item.title = "登录后才可做实验";
 			item.msg = '<p class="goLink-link" style="text-align:center;">'
 					+ '<a href="http://www.ilab-x.com/login">ilab-x国家平台用户登录（在国家平台查到此实验->进入实验页面->我要做实验）</a><br>'
 					+ '<a href="/api/check_user/' + experiment_id + '">南开校内师生登录</a><br>'
-					//+ '<a href="/api/outer_logup" id="not_nankai">南开校外人士注册</a><br>'
-					+ '<a href="#" id="not_nankai">南开校外人士注册</a><br>'
+					+ '<a href="#" id="not_nankai">南开校外人士</a><br>'
+					//+ '<a href="#" id="not_nankai">南开校外人士注册</a><br>'
 					+ '<a href="/api/experts_enter/' + experiment_id + '">评审专家直接进入</a></p>';
 			item.okText = "取消";
             item.noCancel = true;
@@ -364,8 +364,15 @@ X.sub("init", function() {
 		
 		$(document).on("click","#not_nankai",function(){//校外注册
             let item = {};
-			item.title = "提示";
-			item.msg = '校外注册功能正在完善~';
+			item.title = "校外人士注册/登录";
+			item.msg =  '<p class="goLink-link" style="text-align:center;">'
+							+'高校名称：<input id="selectSchool" type="text" name="school" readonly="readonly"><br>'
+							+'专业名称：<input id="major" type="text" name="major"><br>'
+							+'账号名称：<input name="user_name type="text" placeholder="6-10位字母/数字"><br>'
+							+'密码：<input name="user_name" type="password" placeholder="6-10位字母/数字"><br>'
+							+'确认密码：<input name="user_name" type="password" placeholder="6-10位字母/数字"><br>'
+							+'<input  type="button" value="提  交"></p>';
+							
 			item.okText = "取消";
             item.noCancel = true;
 			

@@ -13,7 +13,8 @@ class Myredis{
     //连接是否成功
     public $redis;
     //连接redis服务器ip
-    public $ip = '127.0.0.1';
+    public $ip = '127.0.0.1';//在南开的配置
+    //public $ip = '192.168.1.113';//我本地与虚拟机的连接配置
     //端口
     public $port = 6379;
     //密码

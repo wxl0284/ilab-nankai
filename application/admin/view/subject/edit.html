@@ -222,11 +222,18 @@
         <div class="row cl">
             <label class="form-label col-xs-3 col-sm-3">国家平台编号（issuerId）：</label>
             <div class="formControls col-xs-3 col-sm-3">
-                <input type="text" class="input-text" placeholder="国家平台编号" name="issuerId" value="{$vo.issuerId ?? ''}"  nullmsg="虚拟仿真项目">
+                <input type="text" class="input-text" placeholder="国家平台编号" name="issuerId" value="{$vo.issuerId ?? ''}">
             </div>
-            <!-- <div class="col-xs-3 col-sm-3"></div> -->
         </div>
-        <!--提交实验项目的国家平台编号：issuerId 结束-->        
+        <!--提交实验项目的国家平台编号：issuerId 结束-->
+		<!--提交实验项目的国家平台编号：issuerId-->
+        <div class="row cl">
+            <label class="form-label col-xs-3 col-sm-3">国家平台申报的实验名称：</label>
+            <div class="formControls col-xs-3 col-sm-3">
+                <input type="text" class="input-text" placeholder="须完全匹配国家平台申报实验名称" name="projectTitle" value="{$vo.projectTitle ?? ''}">
+            </div>
+        </div>
+        <!--提交实验项目的国家平台编号：issuerId 结束-->   		
     </div>
     
     <!-- //项目团队 -->
