@@ -350,23 +350,23 @@ X.sub("init", function() {
 		{
 			let item = {};
 			item.title = "登录后才可做实验";
-			item.msg = '<p class="goLink-link" style="text-align:center;">'
-					+ '<a href="http://www.ilab-x.com/login">ilab-x国家平台用户登录（在国家平台查到此实验->进入实验页面->我要做实验）</a><br>'
-					+ '<a href="/api/check_user/' + experiment_id + '">南开校内师生登录</a><br>'
-					+ '<a href="#" id="not_nankai">南开校外人士</a><br>'
-					//+ '<a href="#" id="not_nankai">南开校外人士注册</a><br>'
-					+ '<a href="/api/experts_enter/' + experiment_id + '">评审专家直接进入</a></p>';
+            item.msg = '<p id="login_to_test" class="goLink-link" style="text-align:center;">'
+            + '<a href="http://www.ilab-x.com/login" title="在国家平台查到此实验->进入实验页面->我要做实验">ilab-x国家平台用户登录</a>'
+            + '<a href="/api/check_user/' + experiment_id + '">南开校内师生登录</a><br>'
+            + '<a href="#" id="not_nankai">南开校外人士登录</a>'
+            + '<a href="/api/experts_enter/' + experiment_id + '">评审专家直接进入</a></p>';
 			item.okText = "取消";
             item.noCancel = true;
 			
             X.pub("showDialog", item);
 		}//select_login 结束
 		
-		$(document).on("click","#not_nankai",function(){//校外注册
+		$(document).on("click","#not_nankai",function(){//校外注册 登录
             let item = {};
-			item.title = "校外人士注册/登录";
-			item.msg =  '<p class="goLink-link" style="text-align:center;">'
-							+'高校名称：<input id="selectSchool" type="text" name="school" readonly="readonly"><br>'
+			//item.title = "校外人士注册/登录";
+			item.title = "<div class='p_a' id='outer_div'></div> <div class='log_div t_c p_a out_active' id='out_logup' >校外人士注册</div> <div class='log_div p_a t_c out_not_active' id='out_login'>校外人士登录</div>";
+			item.msg =  '<p class="goLink-link" style="text-align:center;margin-top:9%">'
+							+'高校名称：<input id="selectSchool2" onclick="$(\'#selectSchool\').click()" type="text" name="school" readonly="readonly"><br>'
 							+'专业名称：<input id="major" type="text" name="major"><br>'
 							+'账号名称：<input name="user_name type="text" placeholder="6-10位字母/数字"><br>'
 							+'密码：<input name="user_name" type="password" placeholder="6-10位字母/数字"><br>'
@@ -378,6 +378,37 @@ X.sub("init", function() {
 			
             X.pub("showDialog", item);
         })
+
+
+
+
+        $(document).on("click","#out_logup",function(){//校外注册 点击
+      
+            let login_div = $('#out_login');
+            let logup_div = $('#out_logup');
+            login_div.removeClass('out_active').addClass('out_not_active').css({'border-left':'1px solid #ccc'});
+          
+            if (logup_div.hasClass('out_not_active'))
+            {
+                logup_div.removeClass('out_not_active').addClass('out_active').css({'border-right':'none'})
+            }
+    
+        })
+        
+        $(document).on("click","#out_login",function(){//校外注册 登录
+      
+            let login_div = $('#out_login');
+            let logup_div = $('#out_logup');
+            logup_div.removeClass('out_active').addClass('out_not_active').css({'border-right':'1px solid #ccc'});
+          
+            if (login_div.hasClass('out_not_active'))
+            {
+                login_div.removeClass('out_not_active').addClass('out_active').css({'border-left':'none'})
+            }
+    
+        })
+
+
 		
         // 点赞
         $("#likeBtn").unbind().on("click", function() {
@@ -1455,7 +1486,4 @@ X.sub("init", function() {
             X.pub('closeDialog');
         });
     }
-
-
-
 });

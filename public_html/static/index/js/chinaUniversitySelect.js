@@ -37,11 +37,11 @@ $(function(){
                 $('#choose-a-school').append('<a class="school-item" school-id="'+schools[i].id+'">'+schools[i].name+'</a>');
             }
             //添加大学列表项的click事件
-            $('.school-item').bind('click', function(){
+            $('.school-item').on('click', function(){
                     var item=$(this);
                     var school = item.attr('school-id');
                     //更新选择大学文本框中的值
-                    $('#selectSchool').val(item.text());
+                    $('#selectSchool2').val(item.text());
                     //关闭弹窗
                     $('#choose-box-wrapper').css("display","none");
                 }
@@ -88,12 +88,12 @@ $(function(){
                     $('#choose-a-school').append('<a class="school-item" school-id="'+searchResult[i].id+'">'+searchResult[i].name+'</a>');
                 }
                 //添加大学列表项的click事件
-                $('.school-item').bind('click', function(){
+                $('.school-item').on('click', function(){
                         var item=$(this);
                         var school = item.attr('school-id');
                         //更新选择大学文本框中的值
-                        $('#selectSchool').val(item.text());
-                        console.log(22,item.text());
+                        $('#selectSchool2').val(item.text());
+                        //university_name = item.text();
                         //关闭弹窗
                         $('#choose-box-wrapper').css("display","none");
                     }
