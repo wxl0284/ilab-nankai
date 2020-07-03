@@ -286,9 +286,10 @@ X.sub("init", function() {
                     gotoConfirm();
                 } else {
 					
-					if ( resp.msg.indexOf('您还未登陆') > -1 )
+					if ( resp.msg.indexOf('您还未登录') > -1 )
 					{
-						select_login(resp.experiment_id); //弹出提示框让用户选择入口登录
+                        document.cookie="experiment_id=" + resp.experiment_id; //将cookie写入客户端
+						select_login(); //弹出提示框让用户选择入口登录
 					}else{
 						X.error(resp.msg);
 					}
@@ -344,72 +345,211 @@ X.sub("init", function() {
             X.pub("showDialog", item);
         }
 		
-		/*select_login(experiment_id) 弹出提示框让用户选择入口登录
+		/*select_login() 弹出提示框让用户选择入口登录
 		*/
-		function select_login (experiment_id)
+		function select_login ()
 		{
 			let item = {};
 			item.title = "登录后才可做实验";
             item.msg = '<p id="login_to_test" class="goLink-link" style="text-align:center;">'
             + '<a href="http://www.ilab-x.com/login" title="在国家平台查到此实验->进入实验页面->我要做实验">ilab-x国家平台用户登录</a>'
-            + '<a href="/api/check_user/' + experiment_id + '">南开校内师生登录</a><br>'
+            //+ '<a href="/api/check_user/' + experiment_id + '">南开校内师生登录</a><br>'
+            + '<a href="/api/check_user">南开校内师生登录</a><br>'
             + '<a href="#" id="not_nankai">南开校外人士登录</a>'
-            + '<a href="/api/experts_enter/' + experiment_id + '">评审专家直接进入</a></p>';
+            + '<a href="#" id="experts_into">评审专家直接进入</a></p>';
+            //+ '<a href="/api/experts_enter/' + experiment_id + '">评审专家直接进入</a></p>';
 			item.okText = "取消";
             item.noCancel = true;
 			
             X.pub("showDialog", item);
 		}//select_login 结束
-		
+        
+        $(document).on("click","#experts_into",function(){//专家直接进入
+            $.ajax({
+                url: "/api/experts_enter",
+                type:'get',
+                dataType:'json',
+                success:function(info){
+                    if (info.code==100)
+                    {
+                        layer.msg(info.msg,{icon:2});
+                    }else if(info.code==201)
+                    {
+                        location.href = info.href;
+                    }
+                },
+                error: function(err) {
+                    layer.msg('网络异常, 请重新提交', {icon:2});
+                }
+		    })//ajax 结束
+        })//experts_into click 结束
+
 		$(document).on("click","#not_nankai",function(){//校外注册 登录
             let item = {};
 			//item.title = "校外人士注册/登录";
 			item.title = "<div class='p_a' id='outer_div'></div> <div class='log_div t_c p_a out_active' id='out_logup' >校外人士注册</div> <div class='log_div p_a t_c out_not_active' id='out_login'>校外人士登录</div>";
-			item.msg =  '<p class="goLink-link" style="text-align:center;margin-top:9%">'
-							+'高校名称：<input id="selectSchool2" onclick="$(\'#selectSchool\').click()" type="text" name="school" readonly="readonly"><br>'
-							+'专业名称：<input id="major" type="text" name="major"><br>'
-							+'账号名称：<input name="user_name type="text" placeholder="6-10位字母/数字"><br>'
-							+'密码：<input name="user_name" type="password" placeholder="6-10位字母/数字"><br>'
-							+'确认密码：<input name="user_name" type="password" placeholder="6-10位字母/数字"><br>'
-							+'<input  type="button" value="提  交"></p>';
-							
+                        //注册
+            item.msg =  '<p id="logup_p" class="goLink-link" style="text-align:center;margin-top:9%">'
+                        +'高校名称：<input class="ipt" id="selectSchool2" onclick="$(\'#selectSchool\').click()" type="text" name="school" readonly="readonly"><br>'
+                        +'账号名称：<input class="ipt" id="user_name" name="user_name" type="text" placeholder="6-10位字母/数字"><br>'
+                        +'登录密码：<input class="ipt" id="pswd" name="pswd" type="password" placeholder="6-10位字母/数字"><br>'
+                        +'确认密码：<input class="ipt" id="re_pswd" name="re_pswd" type="password" placeholder="6-10位字母/数字"><br>'
+                        +'<input id="logup_btn" class="ipt" type="button" value="提  交"></p>'
+                        //登录
+                        +'<p id="login_p" class="goLink-link" style="text-align:center;margin-top:9%;display:none;">'
+                        +'账号名称：<input class="ipt" id="user_name1" name="user_name1" type="text" placeholder="6-10位字母/数字"><br>'
+                        +'登录密码：<input class="ipt" id="pswd1" name="pswd1" type="password" placeholder="6-10位字母/数字"><br>'
+                        +'<input id="login_btn" class="ipt" type="button" value="登  录"><br>'
+                        +'<input id="forget_btn" class="ipt" type="button" value="忘记密码"></p>'
+                        //重置密码
+                        +'<p id="forget_p" class="goLink-link" style="text-align:center;margin-top:9%;display:none;">'
+                        +'账号名称：<input class="ipt" id="user_name2" name="user_name2" type="text" placeholder="6-10位字母/数字"><br>'
+                        +'登录密码：<input class="ipt" id="pswd2" name="pswd2" type="password" placeholder="新密码,6-10位字母/数字"><br>'
+                        +'确认密码：<input class="ipt" id="re_pswd2" name="re_pswd2" type="password" placeholder="确认密码,6-10位字母/数字"><br>'
+                        +'<input id="set_pasw_btn" class="ipt" type="button" value="重置密码"></p>';
+
 			item.okText = "取消";
             item.noCancel = true;
 			
             X.pub("showDialog", item);
         })
 
-
-
-
-        $(document).on("click","#out_logup",function(){//校外注册 点击
-      
+        $(document).on("click","#out_logup",function()
+        {//校外注册 点击      
             let login_div = $('#out_login');
-            let logup_div = $('#out_logup');
+            let logup_div = $(this);
+
             login_div.removeClass('out_active').addClass('out_not_active').css({'border-left':'1px solid #ccc'});
           
             if (logup_div.hasClass('out_not_active'))
             {
                 logup_div.removeClass('out_not_active').addClass('out_active').css({'border-right':'none'})
             }
-    
+
+            $('#logup_p').css('display', 'block');//显示注册
+            $('#login_p').css('display', 'none');//隐藏登录
+            $('#forget_p').css('display', 'none');//隐藏忘记密码
         })
         
-        $(document).on("click","#out_login",function(){//校外注册 登录
-      
-            let login_div = $('#out_login');
+        $(document).on("click","#out_login",function()
+        {//校外注册 登录      
+            let login_div = $(this);
             let logup_div = $('#out_logup');
+
             logup_div.removeClass('out_active').addClass('out_not_active').css({'border-right':'1px solid #ccc'});
           
             if (login_div.hasClass('out_not_active'))
             {
                 login_div.removeClass('out_not_active').addClass('out_active').css({'border-left':'none'})
             }
-    
+
+            $('#logup_p').css('display', 'none');//隐藏注册
+            $('#login_p').css('display', 'block');//隐藏注册
+            $('#foget_p').css('display', 'none');//隐藏重置密码
         })
 
+        $(document).on("click","#forget_btn",function()
+        {//忘记密码      
+            $('#forget_p').css('display', 'block');//显示重置密码
+            $('#logup_p').css('display', 'none');//隐藏注册
+            $('#login_p').css('display', 'none');//隐藏登录
+            $('#foget_p').css('display', 'block');//隐藏登录
+        })
 
-		
+        $(document).on("click","#logup_btn",function()
+        {//注册 提交按钮 事件
+           let school = $('#selectSchool2').val();//大学名
+           let user_name = $.trim ( $('#user_name').val() );//账号名
+           let pswd_v = $.trim ( $('#pswd').val() );//密码
+           let re_pswd_v = $.trim ( $('#re_pswd').val() );//确认密码
+
+           let patn = /^[0-9a-zA-Z]{6,10}$/;
+           let msg = '';
+
+           if ( !school ) { msg += '学校名必填<br>'; }
+
+           if ( !patn.test(user_name) ) { msg += '账号名应为6-10位字母数字<br>'; }
+
+           if ( !patn.test(pswd_v) ) { msg += '密码应为6-10位字母数字<br>'; }
+
+           if ( !patn.test(re_pswd_v) ) { msg += '确认密码应为6-10位字母数字<br>'; }
+
+           if ( re_pswd_v !== pswd_v ) { msg += '2次密码不一致'; }
+
+           if ( msg !== '' )
+           {
+                layer.msg(msg,{icon:2})
+                return;
+           }
+
+           $.ajax({
+                url: "/index/subject/out_logup",
+                data:{
+                    'school':school,
+                    'user_name':user_name,
+                    'pswd':pswd_v,
+                    're_pswd':re_pswd_v,
+                },
+                type:'post',
+                dataType:'json',
+                success:function(info){
+                    //console.log(info);
+                    if (info.code==100)
+                    {
+                        layer.msg(info.msg,{icon:2});
+                    }else if(info.code==200)
+                    {
+                        layer.msg(info.msg,{icon:1});
+                    }
+                },
+                error: function(err) {
+                    layer.msg('网络异常, 请重新提交', {icon:2});
+                }
+		    })//ajax 结束
+
+        })//logup_btn click 结束
+
+        $(document).on("click","#login_btn",function()
+        {//校外人士 登录 提交按钮 事件
+           let user_name = $.trim ( $('#user_name1').val() );//账号名
+           let pswd_v = $.trim ( $('#pswd1').val() );//密码
+
+           let patn = /^[0-9a-zA-Z]{6,10}$/;
+           let msg = '';
+
+           if ( !patn.test(user_name) ) { msg += '账号名应为6-10位字母数字<br>'; }
+
+           if ( !patn.test(pswd_v) ) { msg += '密码应为6-10位字母数字'; }
+
+           if ( msg !== '' )
+           {
+                layer.msg(msg,{icon:2}); return;
+           }
+
+           $.ajax({
+                url: "/index/subject/out_login",
+                data:{
+                    'user_name':user_name,
+                    'pswd':pswd_v,
+                },
+                type:'post',
+                dataType:'json',
+                success:function(info){
+                    if (info.code==100)
+                    {
+                        layer.msg(info.msg,{icon:2});
+                    }else if(info.code==201)
+                    {//index/subject/examine_url 方法返回的url 因为在控制器方法里无法跨域访问这些url
+                        location.href = info.href;
+                    }
+                },
+                error: function(err) {
+                    layer.msg('网络异常, 请重新登录', {icon:2});
+                }
+		    })//ajax 结束
+
+        })//login_btn click 结束
+
         // 点赞
         $("#likeBtn").unbind().on("click", function() {
             if (project.status == "0") {

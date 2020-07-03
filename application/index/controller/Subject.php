@@ -3,6 +3,7 @@ namespace app\index\controller;
 use think\Response;
 use think\Db;
 use think\Session;
+use think\Cookie;
 use app\common\model\Redis;
 use country_api\sdk\IlabJwt; //引入处理token的文件
 /**
@@ -583,12 +584,21 @@ class Subject extends Wx
     //做实验前
 	public function examine(){
         $date = input();
-		
-        if(!session::get('home_user_id')){
-            return json([ 'code'=>100,'msg'=>"您还未登陆", 'experiment_id'=>$date['id'] ]);//把当前实验的id返回给前端
+        
+        if ( !isset($date['id']) )
+        {
+            $date['id'] = cookie('experiment_id');
         }
-		
-		$this->redirect( 'index/subject/examine_url', ['id'=>$date['id']], 302, ['user_type'=>session::get('user_type')] );
+
+        $is_ajax = $this->request->isAjax();
+
+        if( $is_ajax && !session::get('home_user_id') )
+        {
+            return json([ 'code'=>100,'msg'=>"您还未登录", 'experiment_id'=>$date['id'] ]);//把当前实验的id返回给前端
+        }elseif( !$is_ajax && !session::get('home_user_id') )
+        {
+            $this->error('登录后才可做实验');
+        }
 		
         $subject = Db::name("subject")->where(['id'=>$date['id']])->field("zip_file, zip_name, zip_name_file, emulate_subject")->find();
         
@@ -619,9 +629,14 @@ class Subject extends Wx
 		}
 
        // $emulate_subject = Db::name("subject")->where(['id'=>$date['id']])->value("zip_name_file");
-        if(!$zip_name_file){
-            //与国家平台对接前 return json(['code'=>100,'msg'=>"该项目不能做实验！"]);
-            $this->error('该项目不能做实验~');
+        if(!$zip_name_file)
+        {
+            if ( $is_ajax )
+            {
+                return json(['code'=>100,'msg'=>"该项目不能做实验！"]);
+            }else{
+                $this->error('该项目不能做实验！');
+            }            
         }
 
         $subject_examine = Db::name("subject_examine")->where(['subject_id'=>$date['id'],'user_id'=>session::get("home_user_id")])->find();
@@ -642,7 +657,7 @@ class Subject extends Wx
         }
 
         //与国家平台对接前 return json(['code'=>200,'result'=>$zip_name_file]);
-        $this->redirect( 'index/subject/examine_url', ['id'=>$date['id']], 302, ['user_type'=>session::get('user_type')] );
+        $this->redirect('index/subject/examine_url');
     }
 	
 	/*//做实验 去掉登录的examine()
@@ -767,9 +782,10 @@ class Subject extends Wx
     public function examine_url ()
 	{
         $date = input();//仅提交了subject的id
-		
-        $subject_id = $date['id'];
-        $user_type = session::get('user_type');
+        $is_ajax = $this->request->is_Ajax();
+        
+        $subject_id = cookie('experiment_id');
+        $user_type = cookie('user_type');
 		
         Vendor("GetMacAddr");
         $mac = new \GetMacAddr(PHP_OS); 
@@ -787,8 +803,6 @@ class Subject extends Wx
 		
         //$zip_name_file = Db::name("subject")->where(['id'=>$subject_id])->value("zip_name_file");
         $r = Db::name("subject")->where(['id'=>$subject_id])->field("zip_name_file, emulate_subject")->find();
-		//halt($r);
-		
 		
 		//判断zip_name_file（压缩文件）, emulate_subject（实验的url链接）,此二者为二选一，之前为只能用zip文件webGL做实验
 		if ( $r['zip_name_file']  && !$r['emulate_subject'] )
@@ -798,8 +812,12 @@ class Subject extends Wx
 		{
 			$emulate_subject = $r['emulate_subject'];
 		}else {
-			//与国家平台对接前 return json(['code'=>100,'msg'=>"该项目不能做实验！"]);
-			$this->error('该项目不能做实验~');
+            if ($is_ajax)
+            {
+                return json(['code'=>100,'msg'=>"该项目不能做实验！"]);
+            }else{
+                $this->error('该项目不能做实验~');
+            }
 		}
 		
        /* if($file_path){
@@ -820,17 +838,27 @@ class Subject extends Wx
 						$arr = explode('|', $emulate_subject);
 						
 						if ( $user_type == 4 )
-						{//是评审专家
-							$this->redirect($arr[0]);
+						{//是评审专家 用ajax 请求的
+                            return json(['code'=>201,'href'=>$arr[0]]);
 						}
 						else
 						{
-							$this->redirect($arr[1]);
+                            if ($is_ajax)
+                            {
+                                return json(['code'=>201, 'href'=>$arr[1]]);
+                            }else{
+                                $this->redirect($arr[1]);//普通请求
+                            }
 						}
 						
 					}
-					
-					$this->redirect($emulate_subject);
+
+                    if ($is_ajax)
+                    {
+                        return json(['code'=>201, 'href'=>$emulate_subject]);
+                    }else{
+                        $this->redirect($emulate_subject);//普通请求
+                    }
 				}
              
             }
@@ -847,8 +875,13 @@ class Subject extends Wx
 			
             if($icount >= 99)
 			{
-                //与国家平台对接前 return json(['code'=>100,'msg'=>"该项目做实验已超过100，请稍后再试！"]);
-				$this->error('该项目做实验已超过100，请稍后再试~');
+                if ($is_ajax)
+                {
+                    return json(['code'=>100,'msg'=>"该项目做实验已超过100，请稍后再试！"]);
+                }else{
+                    $this->error('该项目做实验已超过100，请稍后再试~');
+                }
+
 			}else{
                 foreach ($keys as $key => $val) {
                     $getData = $model->getValue("examine" . $import_no, $val);
@@ -864,21 +897,31 @@ class Subject extends Wx
         //与国家平台对接前 return json(['code'=>200,'result'=>$emulate_subject]);
 
 		if ( strpos($emulate_subject, '|') !== false )
-		{//当实验项目的url地址是用'|'分隔，前面是专家做实验的的url
-			$arr = explode('|', $emulate_subject);
-			
-			if ( $user_type == 4 )
-			{//是评审专家
-				$this->redirect($arr[0]);
-			}
-			else
-			{
-				$this->redirect($arr[1]);
-			}
-			
-		}
-		
-		$this->redirect($emulate_subject);
+        {//当实验项目的url地址是用'|'分隔，前面是专家做实验的的url
+            $arr = explode('|', $emulate_subject);
+            
+            if ( $user_type == 4 )
+            {//是评审专家 用ajax 请求的
+                return json(['code'=>201,'href'=>$arr[0]]);
+            }
+            else
+            {
+                if ($is_ajax)
+                {
+                    return json(['code'=>201, 'href'=>$arr[1]]);
+                }else{
+                    $this->redirect($arr[1]);//普通请求
+                }
+            }
+            
+        }
+
+        if ($is_ajax)
+        {
+            return json(['code'=>201, 'href'=>$emulate_subject]);
+        }else{
+            $this->redirect($emulate_subject);//普通请求
+        }
     }//examine_url 结束
 
     /*
@@ -890,8 +933,7 @@ class Subject extends Wx
     {
 		$d = input('');
 		
-		//判断并获取要做实验的experiment_id
-		$experiment_id = isset($d['experiment_id']) ? $d['experiment_id'] : null;
+        $experiment_id = cookie('experiment_id'); //判断并获取要做实验的experiment_id      
 		
         $loginServer     = "https://sso.nankai.edu.cn/sso/login"; //南开统一身份认证登录地址
         $address         = "https://ilab-x.nankai.edu.cn/api/check_user"; //当前控制器的此方法，即南开统一身份认证的回调地址
@@ -970,7 +1012,7 @@ class Subject extends Wx
                 $res['student_number'] = isExistInArray($extra_attributes,"comsys_student_number");// 学生号                
                 $res['type'] = isExistInArray($extra_attributes,"comsys_usertype");// 获取用户类型   1-学生  2-教工                
                 $res['major'] = isExistInArray($extra_attributes,"comsys_disciplinename"); // 学生专业名称
-				halt( $res );
+	
 				if ( $res['teaching_number'] )
 				{
 					$res['nankai_user_id'] = $res['teaching_number'];
@@ -994,16 +1036,19 @@ class Subject extends Wx
 				
 				if ( !$data )
 				{
-					$tp_user_id = Db::table('tp_user')->insertGetId($res);
+                    $tp_user_id = Db::table('tp_user')->insertGetId($res);
+                    
 					if ($tp_user_id)
 					{
-						session::set('home_user_id', $tp_user_id);
-						$this->redirect('index/subject/examine', ['id' => $experiment_id], 302, ['user_type' => $res['user_type'] ] );
+                        session::set('home_user_id', $tp_user_id);
+                        cookie('user_type', $res['user_type']);
+						$this->redirect('index/subject/examine');
 					}
 				}else
 				{
 					session::set('home_user_id', $data['id']);
-					$this->redirect('index/subject/examine', ['id' => $experiment_id], 302, ['user_type' => $res['user_type'] ] );
+					cookie('user_type', $res['user_type']);
+					$this->redirect('index/subject/examine');
 				}
             }//try 结束
             catch (Exception $e)
@@ -1155,26 +1200,96 @@ class Subject extends Wx
 	*/
 	
 	public function experts_enter ()
-	{
-		$experiment_id = input('experiment_id');
-		
+    {
 		$data = Db::table('tp_user')->where('user_name', 'visitor')->find();
 		
 		if ($data)
 		{
-			session::set('home_user_id', $data['id']);
-			$this->redirect('index/subject/examine', ['id' => $experiment_id], 302, ['user_type' => 4] );
-			//$this->redirect('/a/b.html');
+            session::set('home_user_id', $data['id']);
+            cookie('user_type', 4);
+			$this->redirect('index/subject/examine');
 		}else{
 			
 			$id = Db::table('tp_user')->insertGetId(['user_name'=>'visitor', 'user_type'=>4]);
 			
 			if ($id)
 			{
-				session::set('home_user_id', $id);
-				$this->redirect('index/subject/examine', ['id' => $experiment_id], 302, ['user_type' => 4] );
+                session::set('home_user_id', $id);
+                cookie('user_type', 4);
+				$this->redirect('index/subject/examine');
 			}
 		}
 		
-	}//experts_enter 结束
+    }//experts_enter 结束
+    
+    /*
+	  out_logup() 南开校外注册
+	*/
+	
+	public function out_logup ()
+	{
+        $d = input();
+
+        //检查用户名是否已存在
+        $res = Db::table('tp_user')->where('user_name', $d['user_name'])->find();
+    
+        if ( $res )
+        {
+            return json(['code'=>100,'msg'=>'该账号名已存在']);
+        }
+
+        $d['pswd'] = md5( $d['pswd'] );
+
+        $temp = [
+            'user_name' => $d['user_name'],
+            'password' => $d['pswd'],
+            'user_type' => 5,//校外注册人士
+            'school' => $d['school'],
+        ];
+
+        $r = Db::table('tp_user')->insertGetId($temp);
+
+        if ($r)
+        {
+            return json(['code'=>200,'msg'=>'注册成功,请登录后做实验']);
+        }else{
+            return json(['code'=>100,'msg'=>'网络异常,请再次提交']);
+        }
+		
+    }//out_logup 结束
+    
+    /*
+	  out_login() 南开校外登录
+	*/
+	
+	public function out_login ()
+	{
+        $d = input();
+
+        $pswd = md5 ($d['pswd']);
+
+        //检查用户名是否已存在
+        $res = Db::table('tp_user')->where('user_name', $d['user_name'])->find();
+
+        if ( !$res )
+        {
+            return json(['code'=>100,'msg'=>'登录名或密码错误']);
+        }else
+        {
+            if ( $pswd != $res['password'] )
+            {
+                return json(['code'=>100,'msg'=>'登录名或密码错误']);
+            }else{
+                session::set('home_user_id', $res['id']);
+                cookie('user_type', $res['user_type']);
+                $this->redirect('index/subject/examine');
+            }
+        }
+
+    }//out_login 结束
+    
+    public function xxx() //测试方法
+    {
+       echo '测试 redirect';
+    }
 }

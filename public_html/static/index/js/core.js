@@ -185,11 +185,13 @@ XPE.ajax = function() {
             request.uri=request.uri+'?ts='+ts;
           }
           httpRequest.open('GET', request.uri);
+          httpRequest.setRequestHeader("X-Requested-With", "XMLHttpRequest");
           httpRequest.send(null);
         } else if (request.type==="POST"||request.type==="PUT") {
           httpRequest.open(request.type, request.uri);
           var ct=request.ct||'application/json';
           httpRequest.setRequestHeader('Content-Type',ct);
+          httpRequest.setRequestHeader("X-Requested-With", "XMLHttpRequest");
           if (request.body) {
               if (typeof(request.body)==="string" ) {
                 httpRequest.send(request.body);
@@ -201,9 +203,11 @@ XPE.ajax = function() {
             }
         } else if (request.type==="DELETE") {
             httpRequest.open('DELETE', request.uri);
+            httpRequest.setRequestHeader("X-Requested-With", "XMLHttpRequest");
             httpRequest.send(null);
         } else if (request.type==="SEND") {
             httpRequest.open(request.method, request.uri);
+            httpRequest.setRequestHeader("X-Requested-With", "XMLHttpRequest");
             httpRequest.send(request.body);
         }
       X.pub('ajaxRequestSent',request);
