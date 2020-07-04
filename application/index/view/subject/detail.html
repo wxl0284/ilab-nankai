@@ -258,9 +258,7 @@
             </div>
         </div>
         {include file="public/footer" /}
-    </div>
-	
-	
+    </div>	
 	
 	<!--大学选择-->
 		<div id="choose-box-wrapper" style='z-index: 9999;'>
@@ -347,7 +345,7 @@
 			width: 170px;
 			margin: 4px 0px 4px 12px ;
 			padding-left:10px;
-			background:url(http://ww2.sinaimg.cn/large/005ItG0Rjw1er8sxnnnlpg3004004019.gif) no-repeat 0 9px;
+			background:url('__STATIC__/pic/dot.gif') no-repeat 0 9px;
 		}
 		#choose-a-school a:hover{
 			background-color:#005EAC;
@@ -382,30 +380,11 @@
 	<script src="__STATIC__/js/chinaUniversitySelect.js"></script>
 	<!--大学选择 结束-->
 	
-	
 	<div id="selectSchool">选择大学 </div>
 	
     <script>
         var selectSchool_e = $('#selectSchool');
-
-        selectSchool_e.click(function () { });//
-
-        //将用户id , user_type, experiment_id 存储于此页面，用以后续页面获取此3个值用来给国家平台回传成绩
-        {if condition='isset($user_id)'} let user_id = '' + {$user_id};
-		{else/} let user_id = '';
-		{/if}
-		
-		{if condition='isset($home_user_type)'} let user_type = '' + {$home_user_type};
-		{else/} let user_type = '';
-		{/if}
-		
-		{if condition='isset($experiment_id)'} let exprmt_id = '' + {$experiment_id};
-		{else/} let exprmt_id = '';
-		{/if}
-        
-        sessionStorage.setItem('user_id', user_id);
-        sessionStorage.setItem('user_type', user_type);
-        sessionStorage.setItem('experiment_id', exprmt_id);
+        selectSchool_e.click(function () { });
     </script>
 </body>
 </html>

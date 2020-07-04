@@ -238,8 +238,6 @@ class Subject extends Wx
 
     }
 
- 
-
     private function have_child_cate($cid)
     {
         $cate = Db::name("category")->where("parent_id='{$cid}'")->select();
@@ -259,14 +257,13 @@ class Subject extends Wx
 
         $r = $this->user_from_country($url, $id);
 
-        //if ( $r !== false )
-        if ( 1 )
+        if ( $r !== false )
         {//用户是从国家平台登录且token验证ok 数据入库ok
             session::set('home_user_id', $r['home_user_id']);
 
-            $this->assign('user_id', $r['home_user_id']);
-            $this->assign('home_user_type', $r['home_user_type']);
-            $this->assign('experiment_id', $r['experiment_id']);            
+            cookie('user_type',  $r['home_user_type']);  
+            cookie('experiment_id', $r['experiment_id']);       
+            cookie('user_id', $r['home_user_id']);        
         }
 
         //检查用户是否从国家平台登录后过来的 结束
@@ -597,6 +594,7 @@ class Subject extends Wx
             return json([ 'code'=>100,'msg'=>"您还未登录", 'experiment_id'=>$date['id'] ]);//把当前实验的id返回给前端
         }elseif( !$is_ajax && !session::get('home_user_id') )
         {
+            cookie('experiment_id', $date['id']);
             $this->error('登录后才可做实验');
         }
 		
