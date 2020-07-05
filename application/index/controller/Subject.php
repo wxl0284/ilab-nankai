@@ -588,7 +588,8 @@ class Subject extends Wx
         }
 
         $is_ajax = $this->request->isAjax();
-
+        
+        //halt($is_ajax);
         if( $is_ajax && !session::get('home_user_id') )
         {
             return json([ 'code'=>100,'msg'=>"您还未登录", 'experiment_id'=>$date['id'] ]);//把当前实验的id返回给前端
@@ -780,7 +781,7 @@ class Subject extends Wx
     public function examine_url ()
 	{
         $date = input();//仅提交了subject的id
-        $is_ajax = $this->request->is_Ajax();
+        $is_ajax = $this->request->isAjax();
         
         $subject_id = cookie('experiment_id');
         $user_type = cookie('user_type');
@@ -817,7 +818,6 @@ class Subject extends Wx
                 $this->error('该项目不能做实验~');
             }
 		}
-		
        /* if($file_path){
             $emulate_subject = "/".$file_path."/index.html";
         }else{
@@ -836,7 +836,7 @@ class Subject extends Wx
 						$arr = explode('|', $emulate_subject);
 						
 						if ( $user_type == 4 )
-						{//是评审专家 用ajax 请求的
+                        {//是评审专家 用ajax 请求的
                             return json(['code'=>201,'href'=>$arr[0]]);
 						}
 						else
@@ -900,6 +900,7 @@ class Subject extends Wx
             
             if ( $user_type == 4 )
             {//是评审专家 用ajax 请求的
+             
                 return json(['code'=>201,'href'=>$arr[0]]);
             }
             else
@@ -1286,6 +1287,30 @@ class Subject extends Wx
 
     }//out_login 结束
     
+    /*
+    function reset_pass () 重置密码
+    */
+
+    public function reset_pass ()
+    {
+      $d = input();
+      
+      $user = Db::table('tp_user')->where('user_name', $d['user_name'])->find();
+
+      if ($user)
+      {
+          $r = Db::table('tp_user')->where('user_name', $d['user_name'])->update(['password' => md5($d['pswd'])]);
+          if ($r)
+          {
+            return json(['code'=>200,'msg'=>'重置密码OK']);
+          }else{
+            return json(['code'=>100,'msg'=>'重置密码失败~ 请重新操作']);
+          }
+      }else{
+          return json(['code'=>100,'msg'=>'系统没有此账号~']);
+      }
+    }//reset_pass 结束
+
     public function xxx() //测试方法
     {
        echo '测试 redirect';

@@ -286,12 +286,21 @@ X.sub("init", function() {
                     gotoConfirm();
                 } else {
 					
-					if ( resp.msg.indexOf('您还未登录') > -1 )
-					{
-                        document.cookie="experiment_id=" + resp.experiment_id; //将cookie写入客户端
-						select_login(); //弹出提示框让用户选择入口登录
-					}else{
-						X.error(resp.msg);
+					if (resp.code == 201)
+                    {
+                        location.href = resp.href;
+                    }else if (resp.code == 100)
+                    {
+                        if ( resp.msg.indexOf('您还未登录') > -1 )
+                        {
+                            document.cookie="experiment_id=" + resp.experiment_id; //将cookie写入客户端
+                            select_login(); //弹出提示框让用户选择入口登录
+                        }else{
+                            X.error(resp.msg);
+                        }                   
+                    }
+                    else{
+						X.error('网络异常');
 					}
                    
                 }
@@ -549,6 +558,55 @@ X.sub("init", function() {
 		    })//ajax 结束
 
         })//login_btn click 结束
+
+        $(document).on("click","#set_pasw_btn",function()
+        {//校外人士 重置密码按钮 事件
+            //console.log('forget');
+           let user_name = $.trim ( $('#user_name2').val() );//账号名
+           let pswd_v = $.trim ( $('#pswd2').val() );//密码
+           let re_pswd_v = $.trim ( $('#re_pswd2').val() );//确认密码
+
+           let patn = /^[0-9a-zA-Z]{6,10}$/;
+           let msg = '';
+
+           if ( !patn.test(user_name) ) { msg += '账号名应为6-10位字母数字<br>'; }
+
+           if ( !patn.test(pswd_v) ) { msg += '密码应为6-10位字母数字<br>'; }
+           
+           if ( !patn.test(re_pswd_v) ) { msg += '确认密码应为6-10位字母数字<br>'; }
+           
+           if ( re_pswd_v != pswd_v ) { msg += '2次密码不一致'; }
+
+           if ( msg !== '' )
+           {
+                layer.msg(msg,{icon:2}); return;
+           }
+
+           $.ajax({
+                url: "/index/subject/reset_pass",
+                data:{
+                    'user_name':user_name,
+                    'pswd':pswd_v
+                },
+                type:'post',
+                dataType:'json',
+                success:function(info){
+                    if (info.code==100)
+                    {
+                        layer.msg(info.msg,{icon:2});
+                    }else if(info.code==200)
+                    {
+                        layer.msg('密码重置ok',{icon:1});
+                        $('#login_p').css('display', 'block');
+                        $('#forget_p').css('display', 'none');
+                    }
+                },
+                error: function(err) {
+                    layer.msg('网络异常, 请重新提交', {icon:2});
+                }
+		    })//ajax 结束
+
+        })//login_btn click 结束        
 
         // 点赞
         $("#likeBtn").unbind().on("click", function() {
