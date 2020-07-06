@@ -251,6 +251,7 @@ class Subject extends Wx
 
     public function detail(){
         $id = $this->request->get("id");
+
         //检查用户是否从国家平台登录后过来的
         $url = $this->request->url(true);
         //$url = "http://ilab.com/index/subject/detail?id=30&isView=true?token=AAABcsqOFzkBAAAAAAABkFI=.bqgvrZHv515fgUECBKFE6dTYdpMkq5vSPH+vmC3galrVmUvNNQ64ryfkrGQOcbcjWhs1xJhS5CamhvT6oK1Eqmmhf4RpOD5UnsFnGrpXiP4yYnvKCN4RBPIobqIHrC05dEo067B9IfKTYV0URElvKwMvC1eXLNRoyhrwTTkzdfHXvNLm21ChJJz2y7o0Fsq0IHMgryUfdY7f2l8m12yJWH61COm7IKMM3vW1zUokQaUe1NGF1YQWmauJizCvymOx0naN285RkLv243qXtbivwjcC2ErtROnea8EUYx3A8vfzxSQrEQyzzENo1Hnxx0U1YCbZ/QzGacMcLj8fewfpCg==.XHzPerCA47QDfHKjyEJ9KFZUDPfa8gvbcOEhjcxqzjA=";
@@ -262,11 +263,10 @@ class Subject extends Wx
             session::set('home_user_id', $r['home_user_id']);
 
             cookie('user_type',  $r['home_user_type']);  
-            cookie('experiment_id', $r['experiment_id']);       
-            cookie('user_id', $r['home_user_id']);        
+            cookie('experiment_id', $r['experiment_id']);     
         }
-
         //检查用户是否从国家平台登录后过来的 结束
+
         $data = array(
             "subject_id" => $id,
             "create_time" => time()
@@ -284,7 +284,16 @@ class Subject extends Wx
 
     protected function user_from_country ($url, $id)
     {
-        $return = array();//fan
+        //获取此国家平台分配给此实验key、名称等
+        $subject = Db::table('tp_subject')->where('id', $id)->field('issuerId, projectTitle, secretKey, aesKey')->find();
+
+        // 向ilabjwt类中的issuerId、secretKey、aesKey赋值 如下4个值都是国家空间分配给各实验的
+        IlabJwt::$issuerId  = $subject['issuerId'];
+        IlabJwt::$appName   = $subject['projectTitle'];
+        IlabJwt::$secretKey = $subject['secretKey'];
+        IlabJwt::$aesKey    = $subject['aesKey'];
+
+        $return = array();//返回值
 
         //解析并验证url中的token
         $p = strpos($url, 'token=');
@@ -581,11 +590,6 @@ class Subject extends Wx
     //做实验前
 	public function examine(){
         $date = input();
-        
-        if ( !isset($date['id']) )
-        {
-            $date['id'] = cookie('experiment_id');
-        }
 
         $is_ajax = $this->request->isAjax();
         
@@ -598,7 +602,9 @@ class Subject extends Wx
             cookie('experiment_id', $date['id']);
             $this->error('登录后才可做实验');
         }
-		
+        
+        cookie('experiment_id', $date['id']);
+
         $subject = Db::name("subject")->where(['id'=>$date['id']])->field("zip_file, zip_name, zip_name_file, emulate_subject")->find();
         
 		$zip_name_file = '';

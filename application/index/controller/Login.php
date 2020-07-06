@@ -67,8 +67,8 @@ class Login extends Wx
 
     // 退出
     public function logout(){
-        Session::set('home_user_id', '');
-        Session::set('home_info', '');
+        Session::delete('home_user_id');
+        Session::delete('home_info');
         return $this->fetch('index');
     }
 

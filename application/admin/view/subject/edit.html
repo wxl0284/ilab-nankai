@@ -226,14 +226,30 @@
             </div>
         </div>
         <!--提交实验项目的国家平台编号：issuerId 结束-->
-		<!--提交实验项目的国家平台编号：issuerId-->
+		<!--提交实验项目在国家平台的名称：projectTitle-->
         <div class="row cl">
             <label class="form-label col-xs-3 col-sm-3">国家平台申报的实验名称：</label>
-            <div class="formControls col-xs-3 col-sm-3">
+            <div class="formControls col-xs-6 col-sm-6">
                 <input type="text" class="input-text" placeholder="须完全匹配国家平台申报实验名称" name="projectTitle" value="{$vo.projectTitle ?? ''}">
             </div>
         </div>
-        <!--提交实验项目的国家平台编号：issuerId 结束-->   		
+        <!--提交实验项目的国家平台编号：projectTitle 结束-->
+        <!--提交实验项目的国家平台secret key：secretKey-->
+        <div class="row cl">
+            <label class="form-label col-xs-3 col-sm-3">国家平台secret Key：</label>
+            <div class="formControls col-xs-3 col-sm-3">
+                <input type="text" class="input-text" placeholder="国家平台分配的secret Key" name="secretKey" value="{$vo.secretKey ?? ''}">
+            </div>
+        </div>
+        <!--提交实验项目的国家平台secretKey：secretKey 结束-->
+        <!--提交实验项目的国家平台aes key：aesKey-->
+        <div class="row cl">
+            <label class="form-label col-xs-3 col-sm-3">国家平台aes key：</label>
+            <div class="formControls col-xs-6 col-sm-6">
+                <input type="text" class="input-text" placeholder="国家平台分配的aes key" name="aesKey" value="{$vo.aesKey ?? ''}">
+            </div>
+        </div>
+        <!--提交实验项目的国家平台aes key结束-->  		
     </div>
     
     <!-- //项目团队 -->

@@ -12,7 +12,7 @@ class IlabClient
 {
 	const USER_AGENT = 'ilab-sdk-v-1.0';
 	
-	const URL_PREFIX = 'http://';
+	const URL_PREFIX = 'http://';//国家平台的协议
 	
 	// 回传路径
 	/**

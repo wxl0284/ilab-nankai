@@ -7,19 +7,19 @@ class IlabApi
 	public static function log($ilabUserName, $childProjectTitle, $status, $score, $started_at, $ended_at, $time)
 	{
 		$data = [
-				'username' => (string)$ilabUserName,
-				'projectTitle' => IlabJwt::$appName,
-				'childProjectTitle' => (string)$childProjectTitle,	//id-name-alias
-				'status' => (int)$status,
-				'score' => (int)$score,
-				'startDate' => (int)$started_at,
-				'endDate' => (int)$ended_at,
-				'timeUsed' => (int)$time,
-				'issuerId' => (string)IlabJwt::$issuerId,
+			'username' => (string)$ilabUserName,
+			'projectTitle' => IlabJwt::$appName,
+			'childProjectTitle' => (string)$childProjectTitle,	//id-name-alias
+			'status' => (int)$status,
+			'score' => (int)$score,
+			'startDate' => (int)$started_at,
+			'endDate' => (int)$ended_at,
+			'timeUsed' => (int)$time,
+			'issuerId' => (string)IlabJwt::$issuerId,
 		];
 		
 		$params = [
-				'xjwt' => IlabJwt::getJwt($data),
+			'xjwt' => IlabJwt::getJwt($data),
 		];
 		
 		$result = IlabClient::sendRequest('POST', 'project/log/upload', $params, [], '');
