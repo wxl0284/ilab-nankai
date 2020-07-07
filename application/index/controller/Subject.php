@@ -323,8 +323,11 @@ class Subject extends Wx
             }else{//表里无此用户
                 $data['country_id'] = $token['id']; //国家平台用户id
                 $data['country_un'] = $token['un']; //国家平台用户账号
-                $data['user_name'] = $token['dis']; //国家平台用户姓名
-                $data['user_type'] = 1;//国家平台登录用户类型
+                $data['user_name']  = $token['dis']; //国家平台用户姓名
+                $data['user_type']  = 1;//国家平台登录用户类型
+
+                $data['name']     = $token['dis'] . '__'; //name字段 必填
+                $data['password'] = '123456'; //password字段必填
 
                 $res = Db::table('tp_user')->insertGetId($data);
 
@@ -1008,7 +1011,17 @@ class Subject extends Wx
                     //header("Location:" . $loginServer . "?service=" . $address); //无法访问
 					$this->redirect( $loginServer . "?service=" . $address );
                 }
-                // 获取登录用户的信息  
+                // 获取登录用户的信息
+                $res['password'] = '123456'; // password字段为必填
+                $res['name'] = isExistInArray($extra_attributes,"comsys_name"); // name字段为必填 用户姓名
+                
+                if ( $res['name'] )
+                {
+                    $res['name'] .= '__';//给个值 防止影响其他功能使用此字段
+                }else{
+                    $res['name'] = '___';
+                }
+
                 $res['user_name'] = isExistInArray($extra_attributes,"comsys_name"); // 用户姓名
                 $res['phone'] = isExistInArray($extra_attributes,"comsys_phone"); // 电话号码
                 $res['sex'] = isExistInArray($extra_attributes,"comsys_genders"); // 性别               
@@ -1021,10 +1034,10 @@ class Subject extends Wx
 				if ( $res['teaching_number'] )
 				{
 					$res['nankai_user_id'] = $res['teaching_number'];
-					unset($res['teaching_number']);
+					unset($res['teaching_number'], $res['student_number']);
 				}else if ( $res['student_number'] ) {
 					$res['nankai_user_id'] = $res['student_number'];
-					unset($res['student_number']);
+					unset($res['teaching_number'], $res['student_number']);
 				}
 				
 				if ( $res['type'] == 1 )//学生
@@ -1215,7 +1228,7 @@ class Subject extends Wx
 			$this->redirect('index/subject/examine');
 		}else{
 			
-			$id = Db::table('tp_user')->insertGetId(['user_name'=>'visitor', 'user_type'=>4]);
+            $id = Db::table('tp_user')->insertGetId(['user_name'=>'visitor', 'user_type'=>4, 'name'=>'visitor__', 'password'=>'123456']);//name password为必填字段
 			
 			if ($id)
 			{
@@ -1250,6 +1263,7 @@ class Subject extends Wx
             'password' => $d['pswd'],
             'user_type' => 5,//校外注册人士
             'school' => $d['school'],
+            'name' => $d['user_name'] .'__',//name字段必填 就给个值
         ];
 
         $r = Db::table('tp_user')->insertGetId($temp);
