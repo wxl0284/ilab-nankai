@@ -316,6 +316,7 @@ class Subject extends Wx
 
             if ( $user )
             {
+                session::set('home_info', $user);//原有的登录功能 有此session
                 $return['home_user_id'] = $user['id'];
                 $return['home_user_type'] = $user['user_type'];
                 $return['experiment_id'] = $id;
@@ -333,6 +334,8 @@ class Subject extends Wx
 
                 if ( $res )
                 {
+                    $info = Db::table('tp_user')->where('id', $res)->find();
+                    session::set('home_info', $info);//原有的登录功能 有此session
                     $return['home_user_id'] = $res;
                     $return['home_user_type'] = 1;
                     $return['experiment_id'] = $id;
@@ -606,9 +609,9 @@ class Subject extends Wx
             $this->error('登录后才可做实验');
         }
         
-        cookie('experiment_id', $date['id']);
+        $subjectId = cookie('experiment_id');
 
-        $subject = Db::name("subject")->where(['id'=>$date['id']])->field("zip_file, zip_name, zip_name_file, emulate_subject")->find();
+        $subject = Db::name("subject")->where(['id'=>$subjectId])->field("zip_file, zip_name, zip_name_file, emulate_subject")->find();
         
 		$zip_name_file = '';
 		
@@ -647,7 +650,7 @@ class Subject extends Wx
             }            
         }
 
-        $subject_examine = Db::name("subject_examine")->where(['subject_id'=>$date['id'],'user_id'=>session::get("home_user_id")])->find();
+        $subject_examine = Db::name("subject_examine")->where(['subject_id'=>$subjectId,'user_id'=>session::get("home_user_id")])->find();
 		
         if($subject_examine['is_delete'] == 1){
             Db::name("subject_examine")->where(['subject_id'=>$date['id'],'user_id'=>session::get("home_user_id")])->update(['is_delete'=>0]);
@@ -656,7 +659,7 @@ class Subject extends Wx
         
         if(!$subject_examine){
             $data = array(
-                "subject_id" => $date['id'],
+                "subject_id" => $subjectId,
                 "user_id" => session::get("home_user_id"),
                 "create_time" => time()
             );
@@ -1058,12 +1061,15 @@ class Subject extends Wx
                     
 					if ($tp_user_id)
 					{
+                        $info = Db::table('tp_user')->where('id', $tp_user_id)->find();
+                        session::set('home_info', $info);//原有登录功能有此session 记录日志用的
                         session::set('home_user_id', $tp_user_id);
                         cookie('user_type', $res['user_type']);
 						$this->redirect('index/subject/examine');
 					}
 				}else
 				{
+                    session::set('home_info', $data);//原有登录功能有此session 记录日志用的
 					session::set('home_user_id', $data['id']);
 					cookie('user_type', $res['user_type']);
 					$this->redirect('index/subject/examine');
@@ -1223,6 +1229,7 @@ class Subject extends Wx
 		
 		if ($data)
 		{
+            session::set('home_info', $data);//原有的登录功能 有此session
             session::set('home_user_id', $data['id']);
             cookie('user_type', 4);
 			$this->redirect('index/subject/examine');
@@ -1232,6 +1239,8 @@ class Subject extends Wx
 			
 			if ($id)
 			{
+                $info = Db::table('tp_user')->where('id', $id)->find();
+                session::set('home_info', $info);//原有的登录功能 有此session
                 session::set('home_user_id', $id);
                 cookie('user_type', 4);
 				$this->redirect('index/subject/examine');
@@ -1298,7 +1307,8 @@ class Subject extends Wx
             if ( $pswd != $res['password'] )
             {
                 return json(['code'=>100,'msg'=>'登录名或密码错误']);
-            }else{
+            }else{//登录成功
+                session::set('home_info', $res);//原有的登录功能 有此session
                 session::set('home_user_id', $res['id']);
                 cookie('user_type', $res['user_type']);
                 $this->redirect('index/subject/examine');
