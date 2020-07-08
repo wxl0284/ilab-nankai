@@ -327,7 +327,7 @@ class Subject extends Wx
                 $data['user_name']  = $token['dis']; //国家平台用户姓名
                 $data['user_type']  = 1;//国家平台登录用户类型
 
-                $data['name']     = $token['dis'] . '__'; //name字段 必填
+                $data['name']     = $token['dis']; //name字段 必填
                 $data['password'] = '123456'; //password字段必填
 
                 $res = Db::table('tp_user')->insertGetId($data);
@@ -596,10 +596,14 @@ class Subject extends Wx
     //做实验前
 	public function examine(){
         $date = input();
-        halt( cookie('experiment_id') );
+        
+        if ( !isset($date['id']) )
+        {
+            $date['id'] = cookie('experiment_id');
+        }
+
         $is_ajax = $this->request->isAjax();
         
-        //halt($is_ajax);
         if( $is_ajax && !session::get('home_user_id') )
         {
             return json([ 'code'=>100,'msg'=>"您还未登录", 'experiment_id'=>$date['id'] ]);//把当前实验的id返回给前端
@@ -608,10 +612,8 @@ class Subject extends Wx
             cookie('experiment_id', $date['id']);
             $this->error('登录后才可做实验');
         }
-        
-        $subjectId = cookie('experiment_id');
 
-        $subject = Db::name("subject")->where(['id'=>$subjectId])->field("zip_file, zip_name, zip_name_file, emulate_subject")->find();
+        $subject = Db::name("subject")->where(['id'=>$date['id']])->field("zip_file, zip_name, zip_name_file, emulate_subject")->find();
         
 		$zip_name_file = '';
 		
@@ -650,7 +652,7 @@ class Subject extends Wx
             }            
         }
 
-        $subject_examine = Db::name("subject_examine")->where(['subject_id'=>$subjectId,'user_id'=>session::get("home_user_id")])->find();
+        $subject_examine = Db::name("subject_examine")->where(['subject_id'=>$date['id'],'user_id'=>session::get("home_user_id")])->find();
 		
         if($subject_examine['is_delete'] == 1){
             Db::name("subject_examine")->where(['subject_id'=>$date['id'],'user_id'=>session::get("home_user_id")])->update(['is_delete'=>0]);
@@ -659,7 +661,7 @@ class Subject extends Wx
         
         if(!$subject_examine){
             $data = array(
-                "subject_id" => $subjectId,
+                "subject_id" => $date['id'],
                 "user_id" => session::get("home_user_id"),
                 "create_time" => time()
             );
@@ -1018,11 +1020,9 @@ class Subject extends Wx
                 $res['password'] = '123456'; // password字段为必填
                 $res['name'] = isExistInArray($extra_attributes,"comsys_name"); // name字段为必填 用户姓名
                 
-                if ( $res['name'] )
+                if ( !$res['name'] )
                 {
-                    $res['name'] .= '__';//给个值 防止影响其他功能使用此字段
-                }else{
-                    $res['name'] = '___';
+                    $res['name'] = ' ';//name 字段必填
                 }
 
                 $res['user_name'] = isExistInArray($extra_attributes,"comsys_name"); // 用户姓名
@@ -1235,7 +1235,7 @@ class Subject extends Wx
 			$this->redirect('index/subject/examine');
 		}else{
 			
-            $id = Db::table('tp_user')->insertGetId(['user_name'=>'visitor', 'user_type'=>4, 'name'=>'visitor__', 'password'=>'123456']);//name password为必填字段
+            $id = Db::table('tp_user')->insertGetId(['user_name'=>'visitor', 'user_type'=>4, 'name'=>'visitor', 'password'=>'123456']);//name password为必填字段
 			
 			if ($id)
 			{
@@ -1272,7 +1272,7 @@ class Subject extends Wx
             'password' => $d['pswd'],
             'user_type' => 5,//校外注册人士
             'school' => $d['school'],
-            'name' => $d['user_name'] .'__',//name字段必填 就给个值
+            'name' => $d['user_name'],//name字段必填 就给个值
         ];
 
         $r = Db::table('tp_user')->insertGetId($temp);
