@@ -277,7 +277,7 @@ X.sub("init", function() {
 		// 我要做实验
 		
         X.sub('goTolink', function(evt, url) {
-
+            document.cookie = "experiment_id=" + X.qs.id;
             X.post("/index/subject/examine", {
                 "id": "" + X.qs.id
             }, function(resp) {

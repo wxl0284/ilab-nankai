@@ -593,7 +593,7 @@ class Subject extends Wx
     //做实验前
 	public function examine(){
         $date = input();
-
+        halt( cookie('experiment_id') );
         $is_ajax = $this->request->isAjax();
         
         //halt($is_ajax);
