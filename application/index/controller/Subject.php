@@ -944,7 +944,7 @@ class Subject extends Wx
     
     public function check_user ()
     {
-		$d = input('');
+        $d = input('');
 		
         $experiment_id = cookie('experiment_id'); //判断并获取要做实验的experiment_id      
 		
@@ -1016,6 +1016,7 @@ class Subject extends Wx
                     //header("Location:" . $loginServer . "?service=" . $address); //无法访问
 					$this->redirect( $loginServer . "?service=" . $address );
                 }
+        
                 // 获取登录用户的信息
                 $res['password'] = '123456'; // password字段为必填
                 $res['name'] = isExistInArray($extra_attributes,"comsys_name"); // name字段为必填 用户姓名
@@ -1033,47 +1034,132 @@ class Subject extends Wx
                 $res['student_number'] = isExistInArray($extra_attributes,"comsys_student_number");// 学生号                
                 $res['type'] = isExistInArray($extra_attributes,"comsys_usertype");// 获取用户类型   1-学生  2-教工                
                 $res['major'] = isExistInArray($extra_attributes,"comsys_disciplinename"); // 学生专业名称
-	
-				if ( $res['teaching_number'] )
-				{
-					$res['nankai_user_id'] = $res['teaching_number'];
-					unset($res['teaching_number'], $res['student_number']);
-				}else if ( $res['student_number'] ) {
-					$res['nankai_user_id'] = $res['student_number'];
-					unset($res['teaching_number'], $res['student_number']);
-				}
-				
-				if ( $res['type'] == 1 )//学生
-				{
-					$res['user_type'] = 2;
-					unset($res['type']);
-				}else if( $res['type'] == 2 )//老师
-				{
-					$res['user_type'] = 3;
-					unset($res['type']);
-				}
                 
-				$data = Db::table('tp_user')->where('nankai_user_id', $res['nankai_user_id'])->find();
-				
-				if ( !$data )
-				{
-                    $tp_user_id = Db::table('tp_user')->insertGetId($res);
+                if ( $d['admin_log'] == '01') //南开老师用统一身份认证登录进后台
+                {
+                    $db = Db::table('tp_admin_user');
+                    $info = $db->where('account', $res['teaching_number'])->find();
+
+                    if (!$info)//第一次登录 把用户信息写入tp_admin_user表
+                    {
+                        //把教师数据写入此表中
+                        $temp = [
+                            'account'    => $res['teaching_number'],
+                            'realname'   => $res['user_name'],
+                            'type'       => 2,//教师角色
+                            'status'     => 1,//账号 启用
+                            'password'   => password_hash_tp('123456'),//初始密码123456
+                        ];
+
+                        $r_id = $db->insertGetId( $temp );
+
+                        if ($r_id)
+                        {
+                            // 生成session信息
+                            Session::set(Config::get('rbac.user_auth_key'), $r_id);
+                            Session::set('user_name', $res['teaching_number']);
+                            Session::set('real_name', $res['user_name']);
+                            Session::set('last_login_ip', '');
+                            Session::set('last_login_time', 0);
+                            Session::set('type', 2);
+                          
+                            // 保存登录信息
+                            $update['last_login_time'] = time();
+                            $update['login_count'] = ['exp', 'login_count+1'];
+                            $update['last_login_ip'] = $this->request->ip(0,1);
+                            Db::name("AdminUser")->where('id', $r_id)->update($update);
+
+                            // 记录登录日志
+                            $log['uid'] = $r_id;
+                            $log['login_ip'] = $update['last_login_ip'];
+                            $log['login_location'] = implode(" ", \Ip::find($log['login_ip']));
+                            $log['login_browser'] = \Agent::getBroswer();
+                            $log['login_os'] = \Agent::getOs();
+                            Db::name("LoginLog")->insert($log);
+
+                            // 缓存访问权限
+                            \Rbac::saveAccessList();
+                            $this->redirect('admin/index/index');
+
+                        }else
+                        {
+                            $this->error('网络异常，请重新登录');
+                        }                      
+
+                    }else//已是再次登录
+                    {
+                        // 生成session信息
+                        Session::set(Config::get('rbac.user_auth_key'), $info['id']);
+                        Session::set('user_name', $info['account']);
+                        Session::set('real_name', $info['realname']);
+                        Session::set('last_login_ip', $info['last_login_ip']);
+                        Session::set('last_login_time', $info['last_login_time']);
+                        Session::set('type', $info['type']);
+                      
+                        // 保存登录信息
+                        $update['last_login_time'] = time();
+                        $update['login_count'] = ['exp', 'login_count+1'];
+                        $update['last_login_ip'] = $this->request->ip(0,1);
+                        Db::name("AdminUser")->where('id', $info['id'])->update($update);
+
+                        // 记录登录日志
+                        $log['uid'] = $info['id'];
+                        $log['login_ip'] = $update['last_login_ip'];
+                        $log['login_location'] = implode(" ", \Ip::find($log['login_ip']));
+                        $log['login_browser'] = \Agent::getBroswer();
+                        $log['login_os'] = \Agent::getOs();
+                        Db::name("LoginLog")->insert($log);
+
+                        // 缓存访问权限
+                        \Rbac::saveAccessList();
+                        $this->redirect('admin/index/index');
+                    }//已是再次登录 结束
+
+                }else//南开老师、学生用统一身份认证登录去做实验
+                {
+                    if ( $res['teaching_number'] )
+                    {
+                        $res['nankai_user_id'] = $res['teaching_number'];
+                        unset($res['teaching_number'], $res['student_number']);
+                    }else if ( $res['student_number'] )
+                    {
+                        $res['nankai_user_id'] = $res['student_number'];
+                        unset($res['teaching_number'], $res['student_number']);
+                    }
                     
-					if ($tp_user_id)
-					{
-                        $info = Db::table('tp_user')->where('id', $tp_user_id)->find();
-                        session::set('home_info', $info);//原有登录功能有此session 记录日志用的
-                        session::set('home_user_id', $tp_user_id);
+                    if ( $res['type'] == 1 )//学生
+                    {
+                        $res['user_type'] = 2;
+                        unset($res['type']);
+                    }else if( $res['type'] == 2 )//老师
+                    {
+                        $res['user_type'] = 3;
+                        unset($res['type']);
+                    }
+                    
+                    $data = Db::table('tp_user')->where('nankai_user_id', $res['nankai_user_id'])->find();
+                    
+                    if ( !$data )
+                    {
+                        $tp_user_id = Db::table('tp_user')->insertGetId($res);
+                        
+                        if ($tp_user_id)
+                        {
+                            $info = Db::table('tp_user')->where('id', $tp_user_id)->find();
+                            session::set('home_info', $info);//原有登录功能有此session 记录日志用的
+                            session::set('home_user_id', $tp_user_id);
+                            cookie('user_type', $res['user_type']);
+                            $this->redirect('index/subject/examine');
+                        }
+                    }else
+                    {
+                        session::set('home_info', $data);//原有登录功能有此session 记录日志用的
+                        session::set('home_user_id', $data['id']);
                         cookie('user_type', $res['user_type']);
-						$this->redirect('index/subject/examine');
-					}
-				}else
-				{
-                    session::set('home_info', $data);//原有登录功能有此session 记录日志用的
-					session::set('home_user_id', $data['id']);
-					cookie('user_type', $res['user_type']);
-					$this->redirect('index/subject/examine');
-				}
+                        $this->redirect('index/subject/examine');
+                    }
+                }//南开老师、学生用统一身份认证登录去做实验 结束
+                
             }//try 结束
             catch (Exception $e)
             {

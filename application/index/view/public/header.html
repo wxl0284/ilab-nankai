@@ -24,7 +24,8 @@
                             <a href="{:url('user/index')}" id="username">{$info.name}</a>
                             <img class="pic" src="/{$info.img}" onerror="this.src='__STATIC__/pic/uphead.jpg'" style="">
                             {else/}
-                            <a href="/admin/pub/login" class="to-login">管理实验项目登录</a>
+                            <!-- <a href="/admin/pub/login" class="to-login">管理实验项目登录</a>后台登录地址-->
+                            <a href="/api/check_user/01" class="to-login">管理实验项目登录</a>
                             <a href="{:url('login/logout')}" id="signOff">退出</a>
                             <!-- <a href="/index/login/index" class="to-login">登录</a><span class="line">|</span><a href="/index/register/index" class="to-register">注册</a> 
                             <a href="/index/login/index" class="to-login">登录</a>-->

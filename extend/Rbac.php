@@ -29,9 +29,9 @@ class Rbac
     public static function authenticate($map, $model = '')
     {
         if (!$model) {
-            $model = Config::get('rbac.user_auth_model');
+            $model = Config::get('rbac.user_auth_model'); //$model值为 AdminUser
         }
-
+        
         //使用给定的Map进行认证
         return Db::name($model)->where($map)->find();
     }

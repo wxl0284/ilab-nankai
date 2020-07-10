@@ -104,7 +104,7 @@ class Pub
      * @return \think\response\Json
      */
     public function checkLogin()
-    {
+    {//return ajax_return_adv_error('deng lu ');
         if ($this->request->isAjax() && $this->request->isPost()) {
             $data = $this->request->post();
             $validate = Loader::validate('Pub');
@@ -115,8 +115,11 @@ class Pub
             $map['account'] = $data['account'];
             $map['status'] = 1;
             $auth_info = \Rbac::authenticate($map);
-
+            // $h = fopen('22.txt', 'r+');
+            // fwrite($h, json_encode($auth_info) );die();
+            // return json($auth_info);die();
             // 使用用户名、密码和状态的方式进行认证
+            die();
             if (null === $auth_info) {
                 return ajax_return_adv_error('帐号不存在或已禁用！');
             } else {
@@ -130,7 +133,7 @@ class Pub
                 Session::set('real_name', $auth_info['realname']);
                 Session::set('last_login_ip', $auth_info['last_login_ip']);
                 Session::set('last_login_time', $auth_info['last_login_time']);
-                Session::set('type', $auth_info['type']);  
+                Session::set('type', $auth_info['type']);
                 // 超级管理员标记
                 if ($auth_info['id'] == 1) {
                     Session::set(Config::get('rbac.admin_auth_key'), true);
