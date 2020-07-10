@@ -67,9 +67,11 @@ class Login extends Wx
 
     // 退出
     public function logout(){
-        Session::delete('home_user_id');
-        Session::delete('home_info');
-        return $this->fetch('index');
+        //Session::delete('home_user_id');
+        //Session::delete('home_info');
+        Session::clear();
+        $this->redirect('/');
+        //return $this->fetch('index');
     }
 
     // 忘记密码

@@ -104,7 +104,7 @@ class Pub
      * @return \think\response\Json
      */
     public function checkLogin()
-    {//return ajax_return_adv_error('deng lu ');
+    {
         if ($this->request->isAjax() && $this->request->isPost()) {
             $data = $this->request->post();
             $validate = Loader::validate('Pub');
@@ -119,7 +119,6 @@ class Pub
             // fwrite($h, json_encode($auth_info) );die();
             // return json($auth_info);die();
             // 使用用户名、密码和状态的方式进行认证
-            die();
             if (null === $auth_info) {
                 return ajax_return_adv_error('帐号不存在或已禁用！');
             } else {

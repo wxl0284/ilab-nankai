@@ -4,6 +4,7 @@ use think\Response;
 use think\Db;
 use think\Session;
 use think\Cookie;
+use think\Config;
 use app\common\model\Redis;
 use country_api\sdk\IlabJwt; //引入处理token的文件
 /**
@@ -946,10 +947,17 @@ class Subject extends Wx
     {
         $d = input('');
 		
+		if ( isset($d['admin_log']) )
+		{
+			$address         = "https://ilab-x.nankai.edu.cn/api/check_user?admin_log=01";//带个参数，让南开再请求时区别去做实验的身份验证操作
+		}else{
+			$address         = "https://ilab-x.nankai.edu.cn/api/check_user";//不带参数，表示是去做实验的身份认证操作
+		}
+		
         $experiment_id = cookie('experiment_id'); //判断并获取要做实验的experiment_id      
 		
         $loginServer     = "https://sso.nankai.edu.cn/sso/login"; //南开统一身份认证登录地址
-        $address         = "https://ilab-x.nankai.edu.cn/api/check_user"; //当前控制器的此方法，即南开统一身份认证的回调地址
+        //$address         = "https://ilab-x.nankai.edu.cn/api/check_user"; //当前控制器的此方法，即南开统一身份认证的回调地址
         $validateServer  = "https://sso.nankai.edu.cn/sso/serviceValidate"; //南开cas服务器验证地址
 		
         if ( isset($_REQUEST["ticket"]) && !empty($_REQUEST["ticket"]) )
@@ -1035,10 +1043,9 @@ class Subject extends Wx
                 $res['type'] = isExistInArray($extra_attributes,"comsys_usertype");// 获取用户类型   1-学生  2-教工                
                 $res['major'] = isExistInArray($extra_attributes,"comsys_disciplinename"); // 学生专业名称
                 
-                if ( $d['admin_log'] == '01') //南开老师用统一身份认证登录进后台
+                if ( isset($d['admin_log']) ) //南开老师用统一身份认证登录进后台
                 {
-                    $db = Db::table('tp_admin_user');
-                    $info = $db->where('account', $res['teaching_number'])->find();
+                    $info = Db::table('tp_admin_user')->where('account', $res['teaching_number'])->find();
 
                     if (!$info)//第一次登录 把用户信息写入tp_admin_user表
                     {
@@ -1051,7 +1058,7 @@ class Subject extends Wx
                             'password'   => password_hash_tp('123456'),//初始密码123456
                         ];
 
-                        $r_id = $db->insertGetId( $temp );
+                        $r_id = Db::table('tp_admin_user')->insertGetId( $temp );
 
                         if ($r_id)
                         {
@@ -1076,6 +1083,48 @@ class Subject extends Wx
                             $log['login_browser'] = \Agent::getBroswer();
                             $log['login_os'] = \Agent::getOs();
                             Db::name("LoginLog")->insert($log);
+							
+							//进行做实验前的数据准备
+							if ( $res['teaching_number'] )
+							{
+								$res['nankai_user_id'] = $res['teaching_number'];
+								unset($res['teaching_number'], $res['student_number']);
+							}else if ( $res['student_number'] )
+							{
+								$res['nankai_user_id'] = $res['student_number'];
+								unset($res['teaching_number'], $res['student_number']);
+							}
+
+							if ( $res['type'] == 1 )//学生
+							{
+								$res['user_type'] = 2;
+								unset($res['type']);
+							}else if( $res['type'] == 2 )//老师
+							{
+								$res['user_type'] = 3;
+								unset($res['type']);
+							}
+
+							$data = Db::table('tp_user')->where('nankai_user_id', $res['nankai_user_id'])->find();
+
+							if ( !$data )//还没有此用户
+							{
+								$tp_user_id = Db::table('tp_user')->insertGetId($res);
+								
+								if ($tp_user_id)
+								{
+									$info = Db::table('tp_user')->where('id', $tp_user_id)->find();
+									session::set('home_info', $info);//原有登录功能有此session 记录日志用的
+									session::set('home_user_id', $tp_user_id);
+									cookie('user_type', $res['user_type']);
+								}
+							}else//已有此用户
+							{
+								session::set('home_info', $data);//原有登录功能有此session 记录日志用的
+								session::set('home_user_id', $data['id']);
+								cookie('user_type', $res['user_type']);
+							}
+							//进行做实验前的数据准备 结束
 
                             // 缓存访问权限
                             \Rbac::saveAccessList();
@@ -1109,6 +1158,48 @@ class Subject extends Wx
                         $log['login_browser'] = \Agent::getBroswer();
                         $log['login_os'] = \Agent::getOs();
                         Db::name("LoginLog")->insert($log);
+						
+						//进行做实验前的数据准备
+						if ( $res['teaching_number'] )
+							{
+								$res['nankai_user_id'] = $res['teaching_number'];
+								unset($res['teaching_number'], $res['student_number']);
+							}else if ( $res['student_number'] )
+							{
+								$res['nankai_user_id'] = $res['student_number'];
+								unset($res['teaching_number'], $res['student_number']);
+							}
+
+							if ( $res['type'] == 1 )//学生
+							{
+								$res['user_type'] = 2;
+								unset($res['type']);
+							}else if( $res['type'] == 2 )//老师
+							{
+								$res['user_type'] = 3;
+								unset($res['type']);
+							}
+
+							$data = Db::table('tp_user')->where('nankai_user_id', $res['nankai_user_id'])->find();
+
+							if ( !$data )//还没有此用户
+							{
+								$tp_user_id = Db::table('tp_user')->insertGetId($res);
+								
+								if ($tp_user_id)
+								{
+									$info = Db::table('tp_user')->where('id', $tp_user_id)->find();
+									session::set('home_info', $info);//原有登录功能有此session 记录日志用的
+									session::set('home_user_id', $tp_user_id);
+									cookie('user_type', $res['user_type']);
+								}
+							}else//已有此用户
+							{
+								session::set('home_info', $data);//原有登录功能有此session 记录日志用的
+								session::set('home_user_id', $data['id']);
+								cookie('user_type', $res['user_type']);
+							}
+						//进行做实验前的数据准备 结束
 
                         // 缓存访问权限
                         \Rbac::saveAccessList();
@@ -1139,7 +1230,7 @@ class Subject extends Wx
                     
                     $data = Db::table('tp_user')->where('nankai_user_id', $res['nankai_user_id'])->find();
                     
-                    if ( !$data )
+                    if ( !$data )//还没有此用户
                     {
                         $tp_user_id = Db::table('tp_user')->insertGetId($res);
                         
@@ -1151,7 +1242,7 @@ class Subject extends Wx
                             cookie('user_type', $res['user_type']);
                             $this->redirect('index/subject/examine');
                         }
-                    }else
+                    }else//已有此用户
                     {
                         session::set('home_info', $data);//原有登录功能有此session 记录日志用的
                         session::set('home_user_id', $data['id']);
