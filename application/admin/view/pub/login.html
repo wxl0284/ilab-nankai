@@ -117,6 +117,7 @@
             ajaxPost:true,
             showAllError:true,
             callback:function(ret){
+                console.log(ret);
                 if (ret.code){
                     if (ret.msg == '验证码错误!'){
                         $("#captcha").click();

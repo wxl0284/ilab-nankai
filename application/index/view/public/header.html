@@ -21,6 +21,9 @@
                         <div class="people">
                             {if $info}
                             <a href="{:url('login/logout')}" id="signOff">退出</a>
+                            {if condition="$Think.session.auth_id || $Think.session.administrator"}
+								<a href="/admin/index/index" class="to-login">后台管理页面</a>
+							{/if}
                             <a href="{:url('user/index')}" id="username">{$info.name}</a>
                             <img class="pic" src="/{$info.img}" onerror="this.src='__STATIC__/pic/uphead.jpg'" style="">
                             {else/}

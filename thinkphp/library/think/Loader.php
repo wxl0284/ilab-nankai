@@ -390,6 +390,7 @@ class Loader
                 throw new ClassNotFoundException('class not exists:' . $class, $class);
             }
         }
+
         self::$instance[$guid] = $model;
         return $model;
     }

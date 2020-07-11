@@ -330,6 +330,7 @@ class Subject extends Wx
 
                 $data['name']     = $token['dis']; //name字段 必填
                 $data['password'] = '123456'; //password字段必填
+                $data['phone'] = '18845623568'; //phone字段必填
 
                 $res = Db::table('tp_user')->insertGetId($data);
 
@@ -1036,6 +1037,12 @@ class Subject extends Wx
 
                 $res['user_name'] = isExistInArray($extra_attributes,"comsys_name"); // 用户姓名
                 $res['phone'] = isExistInArray($extra_attributes,"comsys_phone"); // 电话号码
+                
+                if ( !$res['phone'] )
+                {
+                    $res['phone'] = '13612326265';
+                }
+
                 $res['sex'] = isExistInArray($extra_attributes,"comsys_genders"); // 性别               
                 $res['email'] = isExistInArray($extra_attributes,"comsys_email");// 邮件
                 $res['teaching_number'] = isExistInArray($extra_attributes,"comsys_teaching_number");// 教工号                
@@ -1412,7 +1419,7 @@ class Subject extends Wx
 			$this->redirect('index/subject/examine');
 		}else{
 			
-            $id = Db::table('tp_user')->insertGetId(['user_name'=>'visitor', 'user_type'=>4, 'name'=>'visitor', 'password'=>'123456']);//name password为必填字段
+            $id = Db::table('tp_user')->insertGetId(['user_name'=>'visitor', 'user_type'=>4, 'name'=>'visitor', 'password'=>'123456', 'phone'=>'13612345678']);//name password为必填字段
 			
 			if ($id)
 			{
@@ -1450,6 +1457,7 @@ class Subject extends Wx
             'user_type' => 5,//校外注册人士
             'school' => $d['school'],
             'name' => $d['user_name'],//name字段必填 就给个值
+            'phone' => '18836629287',
         ];
 
         $r = Db::table('tp_user')->insertGetId($temp);
