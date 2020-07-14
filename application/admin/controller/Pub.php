@@ -93,9 +93,11 @@ class Pub
     {
         if (UID) {
             Session::clear();
-            $this->success('登出成功！', Config::get('rbac.user_auth_gateway'));
+            //$this->success('登出成功！', Config::get('rbac.user_auth_gateway')); 原退出
+            $this->success('登出成功！', '/');
         } else {
-            $this->error('已经登出！', Config::get('rbac.user_auth_gateway'));
+            $this->error('已经登出！', '/');
+            //$this->error('已经登出！', Config::get('rbac.user_auth_gateway'));
         }
     }
 

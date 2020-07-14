@@ -364,7 +364,7 @@ X.sub("init", function() {
             + '<a href="http://www.ilab-x.com/login" title="在国家平台查到此实验->进入实验页面->我要做实验">ilab-x国家平台用户登录</a>'
             //+ '<a href="/api/check_user/' + experiment_id + '">南开校内师生登录</a><br>'
             + '<a href="/api/check_user">南开校内师生登录</a><br>'
-            + '<a href="#" id="not_nankai">南开校外人士登录</a>'
+            + '<a href="#" id="not_nankai">校外人士登录</a>'
             + '<a href="#" id="experts_into">评审专家直接进入</a></p>';
             //+ '<a href="/api/experts_enter/' + experiment_id + '">评审专家直接进入</a></p>';
 			item.okText = "取消";
