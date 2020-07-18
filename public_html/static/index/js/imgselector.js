@@ -163,24 +163,59 @@ X.sub("init", function() {
         });
 
         $('#imageFile').on('change', function(evt) {
+            
             var preview = X('thumbPreview');
             res = [];
             var files = evt.target.files;
+           // console.log(files[0].name.split('.')[1].toLowerCase());return;
             // 重置错误提示
             $(".image-file-error").text("").hide();
+
+            let msg = '';
+            let msg1 = '';
             // 检测是否有不合格图片
             var isTest = true;
-            for (var i = 0; i < files.length; ++i) {
+            for (var i = 0; i < files.length; ++i) {//图片不能大于100k
                 if (files[i].size > obj.size) {
                     isTest = false;
+                    msg  += "图片大小不符合规定(" + obj.size / 1024 + " KB)";
+                    msg1 += "The image size exceeds(" + obj.size / 1024 + " KB)";
                     break;
                 }
             }
+
+            //检查图片格式
+            for (var i = 0; i < files.length; ++i)
+            {//必须是jpg、png格式
+                let t = files[i].name.split('.')[1].toLowerCase();
+
+                if ( !(t === 'jpg' || t === 'png') )
+                {
+                    isTest = false;
+
+                    if ( msg )
+                    {
+                        msg += ", 图片格式必须为jpg/png";
+                    }else{
+                        msg += "图片格式必须为jpg/png";
+                    }
+
+                    if ( msg1 )
+                    {
+                        msg1 += ", 图片格式必须为jpg/png";
+                    }else{
+                        msg1 += "图片格式必须为jpg/png";
+                    }
+
+                    break;
+                }                
+            }
+
             if (!isTest) {
                 if (lang == "EN") {
-                    error2("The image exceeds the recommended size(" + obj.size / 1024 + " KB), The image exceeds the recommended size.");
+                    error2(msg1);
                 } else {
-                    error2("图片大小不符合规定(" + obj.size / 1024 + " KB)，请重新上传。");
+                    error2(msg);
                 }
                 return;
             }

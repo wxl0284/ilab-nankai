@@ -35,11 +35,13 @@ X.sub("init", function() {
     function closeAndCallback() {
         onClose();
         if (callback) {
+            //console.log(99);return;
             callback();
         }
     }
 
     X('dialog_ok').addEventListener('click', function() {
+        
         if (enable) {
             if (validator) {
                 validator(cloaseAndCallback);

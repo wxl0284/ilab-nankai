@@ -341,11 +341,24 @@ class User extends Common
 
     public function image(){
         $get = $this->request->post();
+        
+        //验证文件格式
+        if ( $get['desc'] )
+        {
+            $t = explode('.', $get['desc']);
+
+            if ( !($t[1] == 'jpg' || $t[1] == 'png') )
+            {
+                return json(['code'=>100,'msg'=>"图片格式必须为jpg/png"]);
+            }
+        }
+        
         if (!$get['zcimage'] || !preg_match('/^(data:\s*image\/(\w+);base64,)/', $get['zcimage'], $result)){
             return json(['code'=>100,'msg'=>"zsimage error"]);
         } 
         $base64_image_content = $get['zcimage'];
         $zsimage = $this->base64_image_content($base64_image_content,$get['desc']);
+        
         $this->log('【修改头像】');
         Db::name('user')->where(array('id' => $this->user_id))->update(['img'=>$zsimage]);
         return json(array('code' => 0, 'msg' => '修改成功'));
