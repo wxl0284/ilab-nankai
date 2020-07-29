@@ -162,6 +162,7 @@ class Subject extends Controller
     {
         $controller = $this->request->controller();
         if ($this->request->isAjax()) {
+			
             // 更新
             $data = input('post.');
 			

@@ -33,7 +33,6 @@ class AdminNode
                 . "AND node.isdelete=0 "
                 . "AND node.group_id > 0 "
                 . "ORDER BY node.sort ASC";
-            //halt($sql);
             $nodes = Db::query($sql);
         }
 

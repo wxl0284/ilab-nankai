@@ -381,6 +381,8 @@
 	<script src="__STATIC__/js/chinaUniversitySelect.js"></script>
 	<!--大学选择 结束-->
 	
+	<div id="selectSchool">选择大学 </div>
+	
     <script>
         var selectSchool_e = $('#selectSchool');
         selectSchool_e.click(function () { });
